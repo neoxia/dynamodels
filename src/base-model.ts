@@ -2,62 +2,10 @@ import Joi from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
+import { Query } from './query';
+import { Scan } from './scan';
 
 export type Key = string | number | Buffer;
-
-export type Operator =
-  | 'EQ'
-  | 'NE'
-  | 'IN'
-  | 'LE'
-  | 'LT'
-  | 'GE'
-  | 'GT'
-  | 'BETWEEN'
-  | 'NOT_NULL'
-  | 'NULL'
-  | 'CONTAINS'
-  | 'NOT_CONTAINS'
-  | 'BEGINS_WITH';
-
-export interface IQueryResult<T> {
-  items: T[];
-  nextPage: IPagination;
-  count: number;
-}
-
-export type IScanResult<T> = IQueryResult<T>;
-
-export type IKeyConditions = IKeySimpleConditions | IKeyComplexConditions;
-
-export interface IKeyComplexConditions {
-  [atributeName: string]: {
-    operator?: Operator;
-    values: Key[];
-  };
-}
-
-export interface IKeySimpleConditions {
-  [atributeName: string]: Key;
-}
-
-export interface IQueryOptions {
-  keys: IKeyConditions;
-  index?: string;
-  page?: IPagination;
-  filters?: IKeyConditions;
-  sort?: 'asc' | 'desc';
-}
-
-export interface IScanOptions {
-  page?: IPagination;
-  filters?: IKeyConditions;
-}
-
-export interface IPagination {
-  lastEvaluatedKey: any;
-  size: number;
-}
 
 export interface IUpdateActions {
   [attributeName: string]: {
@@ -299,92 +247,15 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
-  public async scan(): Promise<IScanResult<T>>;
-  public async scan(
-    scanOptions: IScanOptions,
-    nativeOptions?: Partial<DocumentClient.ScanInput>,
-  ): Promise<IScanResult<T>>;
-  public async scan(nativeOptions: Partial<DocumentClient.ScanInput>): Promise<IScanResult<T>>;
-  public async scan(
-    scanOptions_nativeOptions?: IScanOptions | Partial<DocumentClient.ScanInput>,
-    nativeOptions?: Partial<DocumentClient.ScanInput>,
-  ): Promise<IScanResult<T>> {
-    // Handle method overloading
-    const scanOptions: IScanOptions =
-      scanOptions_nativeOptions != null && this.isScanOptions(scanOptions_nativeOptions)
-        ? scanOptions_nativeOptions
-        : null;
-    const options: Partial<DocumentClient.ScanInput> =
-      scanOptions_nativeOptions != null && this.isScanOptions(scanOptions_nativeOptions)
-        ? nativeOptions
-        : (scanOptions_nativeOptions as Partial<DocumentClient.ScanInput>);
+  public async scan(options?: Partial<DocumentClient.ScanInput>): Promise<Scan<T>> {
     // Building scan parameters
     const params: DocumentClient.ScanInput = {
       TableName: this.tableName,
     };
-    if (scanOptions) {
-      if (scanOptions.page) {
-        params.ExclusiveStartKey = scanOptions.page.lastEvaluatedKey;
-        params.Limit = scanOptions.page.size;
-      }
-      if (scanOptions.filters != null) {
-        params.ScanFilter = this.buildKeyConditions(scanOptions.filters);
-      }
-    }
     if (options) {
       Object.assign(params, options);
     }
-    const result = await this.documentClient.scan(params).promise();
-    return {
-      items: result.Items as T[],
-      count: result.ScannedCount,
-      nextPage: {
-        lastEvaluatedKey: result.LastEvaluatedKey,
-        size: scanOptions && scanOptions.page ? scanOptions.page.size : undefined,
-      },
-    };
-  }
-
-  private isScanOptions(options): options is IScanOptions {
-    return (options as IScanOptions).filters !== undefined || (options as IScanOptions).page !== undefined;
-  }
-
-  /**
-   * Scan all items in the table, even if it is larger than 1MB
-   * @param options : Additional options supported by AWS document client.
-   * @returns All the items in the table
-   */
-  public async scanAll(): Promise<T[]>;
-  public async scanAll(scanOptions: IScanOptions, nativeOptions?: Partial<DocumentClient.ScanInput>): Promise<T[]>;
-  public async scanAll(nativeOptions: Partial<DocumentClient.ScanInput>): Promise<T[]>;
-  public async scanAll(
-    scanOptions_nativeOptions?: IScanOptions | Partial<DocumentClient.ScanInput>,
-    nativeOptions?: Partial<DocumentClient.ScanInput>,
-  ): Promise<T[]> {
-    // Handle method overloading
-    const scanOptions: IScanOptions =
-      scanOptions_nativeOptions != null && this.isScanOptions(scanOptions_nativeOptions)
-        ? scanOptions_nativeOptions
-        : null;
-    const options: Partial<DocumentClient.ScanInput> =
-      scanOptions_nativeOptions != null && this.isScanOptions(scanOptions_nativeOptions)
-        ? nativeOptions
-        : (scanOptions_nativeOptions as Partial<DocumentClient.ScanInput>);
-    let lastKey = null;
-    const items = [];
-    do {
-      const params: Partial<DocumentClient.ScanInput> = {
-        ExclusiveStartKey: lastKey,
-      };
-      // Building scan parameters
-      if (options) {
-        Object.assign(params, options);
-      }
-      const result = await this.scan(scanOptions, params);
-      items.push(...result.items);
-      lastKey = result.nextPage.lastEvaluatedKey;
-    } while (lastKey != null);
-    return items as T[];
+    return new Scan(this.documentClient, params);
   }
 
   /**
@@ -392,93 +263,31 @@ export abstract class Model<T> {
    * @param options The query options expected by AWS document client.
    * @returns The items matching the keys conditions, in the limit of 1MB, and the last evaluated key.
    */
-  public async query(
-    queryOptions: IQueryOptions,
-    nativeOptions?: Partial<DocumentClient.QueryInput>,
-  ): Promise<IQueryResult<T>> {
+  public query(index?: string): Query<T>;
+  public query(options?: Partial<DocumentClient.QueryInput>): Query<T>;
+  public query(index?: string, options?: Partial<DocumentClient.QueryInput>): Query<T>;
+  public query(
+    index_options?: string | Partial<DocumentClient.QueryInput>,
+    options?: Partial<DocumentClient.QueryInput>,
+  ): Query<T> {
+    // Handle overloading
+    const indexName: string = index_options != null && typeof index_options === 'string' ? index_options : null;
+    const queryOptions: Partial<DocumentClient.QueryInput> =
+      index_options != null && typeof index_options === 'string'
+        ? options
+        : (index_options as Partial<DocumentClient.QueryInput>);
     // Building query
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
       KeyConditions: {},
     };
-    // Building key condition
-    params.KeyConditions = this.buildKeyConditions(queryOptions.keys);
-    if (queryOptions != null) {
-      // Specifying index
-      if (queryOptions.index != null) {
-        params.IndexName = queryOptions.index;
-      }
-      // Building filter condition
-      if (queryOptions.filters != null) {
-        params.QueryFilter = this.buildKeyConditions(queryOptions.filters);
-      }
-      // Enable pagination
-      if (queryOptions.page != null) {
-        params.ExclusiveStartKey = queryOptions.page.lastEvaluatedKey;
-        params.Limit = queryOptions.page.size;
-      }
-      // Enable sorting
-      if (queryOptions.sort != null) {
-        params.ScanIndexForward = queryOptions.sort === 'desc' ? false : true;
-      }
+    if (indexName) {
+      params.IndexName = indexName;
     }
-    Object.assign(params, nativeOptions);
-    const result = await this.documentClient.query(params).promise();
-    // Build response
-    return {
-      items: result.Items as T[],
-      count: result.Count,
-      nextPage: {
-        lastEvaluatedKey: result.LastEvaluatedKey,
-        size: queryOptions && queryOptions.page ? queryOptions.page.size : undefined,
-      },
-    };
-  }
-
-  private buildKeyConditions(keyConditions: IKeyConditions): DocumentClient.KeyConditions {
-    const conditions: DocumentClient.KeyConditions = {};
-    if (this.isComplexConditions(keyConditions)) {
-      Object.keys(keyConditions).forEach((field) => {
-        conditions[field] = {
-          ComparisonOperator: keyConditions[field].operator != null ? keyConditions[field].operator : 'EQ',
-          AttributeValueList: [keyConditions[field].values],
-        };
-      });
-      return conditions;
+    if (queryOptions) {
+      Object.assign(params, queryOptions);
     }
-    Object.keys(keyConditions).forEach((field) => {
-      conditions[field] = {
-        ComparisonOperator: 'EQ',
-        AttributeValueList: [keyConditions[field]],
-      };
-    });
-    return conditions;
-  }
-
-  private isComplexConditions(keyConditions: IKeyConditions): keyConditions is IKeyComplexConditions {
-    return Object.keys(keyConditions).some((field) => (keyConditions[field] as any).operator !== undefined);
-  }
-
-  /**
-   * Peform a query operation and return all matching item, even it overcome 1MB single query operation limit.
-   * @param options The query options expected by AWS document client.
-   * @returns The items matching the keys conditions.
-   */
-  public async queryAll(queryOptions: IQueryOptions, nativeOptions?: Partial<DocumentClient.QueryInput>): Promise<T[]> {
-    let lastKey = null;
-    const items = [];
-    do {
-      const params: Partial<DocumentClient.QueryInput> = {
-        ExclusiveStartKey: lastKey,
-      };
-      if (nativeOptions) {
-        Object.assign(params, nativeOptions);
-      }
-      const result = await this.query(queryOptions, params);
-      items.push(...result.items);
-      lastKey = result.nextPage.lastEvaluatedKey;
-    } while (lastKey != null);
-    return items as T[];
+    return new Query(this.documentClient, params);
   }
 
   /**
