@@ -8,10 +8,11 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pre:test": "npx sls dynamodb install",
+    "test": "LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --verbose --colors --config jest.config.json --detectOpenHandles"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Mario Arnautou",
+  "license": "MIT",
   "dependencies": {
     "@hapi/joi": "^15.1.1",
     "aws-sdk": "^2.520.0"
@@ -20,6 +21,11 @@
     "@types/hapi__joi": "^15.0.3",
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.3",
-    "jest": "^24.9.0"
+    "jest": "^24.9.0",
+    "kill-port": "^1.5.1",
+    "serverless": "^1.51.0",
+    "serverless-dynamodb-local": "^0.2.38",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.6.2"
   }
 }

@@ -1,0 +1,24 @@
+{
+  "testEnvironment": "node",
+  "roots": [
+    "<rootDir>/test"
+  ],
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "maxConcurrency": 1,
+  "testRegex": ".+\\.(test|spec)\\.tsx?$",
+  "moduleFileExtensions": [
+    "ts",
+    "tsx",
+    "js",
+    "jsx",
+    "json",
+    "node"
+  ],
+  "moduleNameMapper": {
+    "@/(.*)": "<rootDir>/src/$1"
+  },
+  "globalSetup": "<rootDir>/test/hooks/setup.ts",
+  "globalTeardown": "<rootDir>/test/hooks/teardown.ts"
+}

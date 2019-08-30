@@ -1,4 +1,4 @@
-import Joi from '@hapi/joi';
+import { ObjectSchema, validate, ValidationError as JoiValidationError} from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
@@ -15,8 +15,8 @@ export interface IUpdateActions {
 }
 
 class ValidationError extends Error {
-  details: Joi.ValidationError;
-  constructor(message: string, details: Joi.ValidationError) {
+  details: JoiValidationError;
+  constructor(message: string, details: JoiValidationError) {
     super(message);
     this.name = 'ValidationError';
     this.details = details;
@@ -29,16 +29,10 @@ export abstract class Model<T> {
   protected pk: string;
   protected sk: string;
   protected documentClient: DocumentClient;
-  protected schema: Joi.ObjectSchema;
+  protected schema: ObjectSchema;
 
   constructor(item?: T) {
     this.item = item;
-    if (!this.tableName) {
-      throw Error('No table name specified');
-    }
-    if (!this.pk) {
-      throw Error('No hash key specified');
-    }
     if (!this.documentClient) {
       this.documentClient = new DocumentClient();
     }
@@ -104,8 +98,11 @@ export abstract class Model<T> {
     const putOptions: Partial<DocumentClient.PutItemInput> =
       item_options != null && this.isItem(item_options) ? options : item_options;
     // Validate item to put
+    if (!toSave) {
+      throw Error('No item to save');
+    }
     if (this.schema) {
-      const { error } = Joi.validate(toSave, this.schema);
+      const { error } = validate(toSave, this.schema);
       if (error) {
         throw new ValidationError('Validation error', error);
       }
