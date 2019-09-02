@@ -1,5 +1,7 @@
 # Dynamodel
 
+![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodel/master/logo.svg?sanitize=true)
+
 Dynamodel is a dead simple typescript overlay to easily manage DynamoDB CRUD operations.
 
 It provides helpers for pagination, filtering, sorting and more !
