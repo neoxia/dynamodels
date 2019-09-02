@@ -18,7 +18,7 @@ interface IAlbum {
   artist: string;
   album: string;
   release_year?: number;
-  genre?: string[];
+  genres?: string[];
 }
 
 export class Album extends Model<IAlbum> {
@@ -83,6 +83,41 @@ await album.create({
   artist: 'Bob Marley & The Wailers',
   album: 'Burnin\'',
   release_year: 1973,
+  genre: ['Reggea'],
+});
+```
+
+### Model validation
+
+You can use Joi objects to validate the data to save.
+
+If object don't pass Joi validation an error is thrown.
+
+Define your Joi schema in your model.
+
+```typescript
+export class Album extends Model<IAlbum> {
+  protected tableName = 'my_albums';
+  protected hashkey = 'artist';
+  protected rangekey = 'album';
+
+  protected schema = Joi.object().keys({
+    artist: Joi.string().required(),
+    album: Joi.string().required(),
+    release_year: Joi.number().required(),
+    genres: Joi.array(Joi.string()).optional(),
+  });
+} 
+```
+
+Model validation is automatically enforced when creating/saving entities:
+
+```typescript
+// Will throw as release_year must be a number
+await album.save({
+  artist: 'Bob Marley & The Wailers',
+  album: 'Burnin\'',
+  release_year: '1973',
   genre: ['Reggea'],
 });
 ```
