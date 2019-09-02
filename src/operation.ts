@@ -1,6 +1,6 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { IPaginationOptions, paginate } from './paginate';
-import { IKeyConditions, buildKeyConditions } from './build-keys';
+import { IFilterConditions, buildFilterConditions } from './build-keys';
 
 export interface IPaginatedResult<T> {
   items: T[];
@@ -18,8 +18,8 @@ export abstract class Operation<T> {
     this.params = params;
   }
 
-  public filter(keyConditions: IKeyConditions) {
-    this.params.QueryFilter = buildKeyConditions(keyConditions);
+  public filter(filterConditions: IFilterConditions) {
+    this.params.QueryFilter = buildFilterConditions(filterConditions);
   }
 
   public paginate(options: IPaginationOptions) {

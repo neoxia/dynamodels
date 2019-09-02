@@ -4,15 +4,9 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { Query } from './query';
 import { Scan } from './scan';
+import { IUpdateActions, buildUpdateActions } from './update-operators';
 
 export type Key = string | number | Buffer;
-
-export interface IUpdateActions {
-  [attributeName: string]: {
-    action: 'ADD' | 'PUT' | 'DELETE';
-    value: any;
-  };
-}
 
 class ValidationError extends Error {
   details: JoiValidationError;
@@ -361,14 +355,9 @@ export abstract class Model<T> {
     const params: DocumentClient.UpdateItemInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
-      AttributeUpdates: {},
+      AttributeUpdates: buildUpdateActions(updateActions),
     };
-    Object.keys(updateActions).forEach((field) => {
-      params.AttributeUpdates[field] = {
-        Action: updateActions[field].action,
-        Value: updateActions[field].value,
-      };
-    });
+
     return this.documentClient.update(params).promise();
   }
 

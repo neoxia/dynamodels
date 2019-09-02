@@ -1,35 +1,36 @@
 import { Key } from './base-model';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { IkeyCondition, IFilterCondition } from './key-operators';
 
-export type Operator =
-  | 'EQ'
-  | 'NE'
-  | 'IN'
-  | 'LE'
-  | 'LT'
-  | 'GE'
-  | 'GT'
-  | 'BETWEEN'
-  | 'NOT_NULL'
-  | 'NULL'
-  | 'CONTAINS'
-  | 'NOT_CONTAINS'
-  | 'BEGINS_WITH';
+type IConditions = ISimpleConditions | IComplexConditions;
 
-export type IKeyConditions = IKeySimpleConditions | IKeyComplexConditions;
+export type IKeyConditions = ISimpleConditions | IComplexKeyConditions;
 
-export interface IKeyComplexConditions {
-  [atributeName: string]: {
-    operator?: Operator;
-    values: Key[];
-  };
+export type IFilterConditions = ISimpleConditions | IComplexFilterConditions;
+
+interface IComplexKeyConditions {
+  [atributeName: string]: IkeyCondition;
 }
 
-export interface IKeySimpleConditions {
+interface IComplexFilterConditions {
+  [atributeName: string]: IkeyCondition | IFilterCondition;
+}
+
+interface IComplexConditions {
+  [atributeName: string]: IkeyCondition | IFilterCondition;
+}
+
+interface ISimpleConditions {
   [atributeName: string]: Key;
 }
 
-export const buildKeyConditions = (keyConditions: IKeyConditions): DocumentClient.KeyConditions => {
+export const buildKeyConditions = (keyConditions: IKeyConditions): DocumentClient.KeyConditions =>
+  buildConditions(keyConditions);
+
+export const buildFilterConditions = (filterConditions: IFilterConditions): DocumentClient.KeyConditions =>
+  buildConditions(filterConditions);
+
+const buildConditions = (keyConditions: IConditions): DocumentClient.KeyConditions => {
   const conditions: DocumentClient.KeyConditions = {};
   if (isComplexConditions(keyConditions)) {
     Object.keys(keyConditions).forEach((field) => {
@@ -49,6 +50,6 @@ export const buildKeyConditions = (keyConditions: IKeyConditions): DocumentClien
   return conditions;
 };
 
-export const isComplexConditions = (keyConditions: IKeyConditions): keyConditions is IKeyComplexConditions => {
+const isComplexConditions = (keyConditions: IConditions): keyConditions is IComplexConditions => {
   return Object.keys(keyConditions).some((field) => (keyConditions[field] as any).operator !== undefined);
 };
