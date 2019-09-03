@@ -1,5 +1,6 @@
 import { Model } from '../src/base-model';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { object, string, number, array, any, boolean } from '@hapi/joi';
 
 export const documentClient = new DocumentClient({
   region: 'localhost',
@@ -28,6 +29,27 @@ export class HashKeyModel extends Model<HashKeyEntity> {
   protected tableName = 'table_test_hashkey';
   protected pk = 'hashkey';
   protected documentClient: DocumentClient = documentClient;
+
+  constructor(item?: HashKeyEntity) {
+    super(item);
+  }
+}
+
+export class HashKeyJoiModel extends Model<HashKeyEntity> {
+  protected tableName = 'table_test_hashkey';
+  protected pk = 'hashkey';
+  protected documentClient: DocumentClient = documentClient;
+  protected schema = object().keys({
+    hashkey: string().required(),
+    number: number().required(),
+    bool: boolean(),
+    string: string()
+      .email()
+      .required(),
+    stringset: array().items(string()),
+    list: array().items(any()),
+    stringmap: object(),
+  });
 
   constructor(item?: HashKeyEntity) {
     super(item);

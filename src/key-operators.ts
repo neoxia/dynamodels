@@ -1,25 +1,12 @@
 import { Key } from './base-model';
+import { IFilterConditionOperators, FilterValue } from './filter-conditions';
+import { IKeyConditionsOperators } from './key-conditions';
 
-export type IKeyConditionsOperators = 'EQ' | 'LE' | 'LT' | 'GE' | 'GT' | 'BEGINS_WITH' | 'BETWEEN';
-
-export type IFilterConditionOperator =
-  | 'EQ'
-  | 'NE'
-  | 'IN'
-  | 'LE'
-  | 'LT'
-  | 'GE'
-  | 'GT'
-  | 'BETWEEN'
-  | 'NOT_NULL'
-  | 'NULL'
-  | 'CONTAINS'
-  | 'NOT_CONTAINS'
-  | 'BEGINS_WITH';
+type ConditionValue = Key | FilterValue;
 
 export interface IFilterCondition {
-  operator?: IFilterConditionOperator;
-  values: Key[];
+  operator?: IFilterConditionOperators;
+  values: FilterValue[];
 }
 
 export interface IkeyCondition {
@@ -27,14 +14,14 @@ export interface IkeyCondition {
   values: Key[];
 }
 
-const _op = (op: IKeyConditionsOperators | IFilterConditionOperator, values: Key[]) => ({
+const _op = (op: IKeyConditionsOperators | IFilterConditionOperators, values: Array<ConditionValue>) => ({
   operator: op,
   values,
 });
 
 export const eq = (value: Key): IkeyCondition | IFilterCondition => _op('EQ', [value]);
-export const neq = (value: Key): IFilterCondition => _op('NE', [value]);
-export const _in = (values: Key[]): IFilterCondition => _op('IN', values);
+export const neq = (value: FilterValue): IFilterCondition => _op('NE', [value]);
+export const _in = (values: FilterValue[]): IFilterCondition => _op('IN', values);
 export const le = (value: Key): IkeyCondition | IFilterCondition => _op('LE', [value]);
 export const lt = (value: Key): IkeyCondition | IFilterCondition => _op('LT', [value]);
 export const ge = (value: Key): IkeyCondition | IFilterCondition => _op('GE', [value]);

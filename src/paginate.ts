@@ -1,11 +1,15 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, Key } from 'aws-sdk/clients/dynamodb';
 
 export interface IPaginationOptions {
-  lastEvaluatedKey: any;
+  lastEvaluatedKey?: Key;
   size: number;
 }
 
 export const paginate = (params: DocumentClient.ScanInput | DocumentClient.QueryInput, options: IPaginationOptions) => {
-  params.ExclusiveStartKey = options.lastEvaluatedKey;
+  if (options.lastEvaluatedKey) {
+    params.ExclusiveStartKey = options.lastEvaluatedKey;
+  } else {
+    params.ExclusiveStartKey = null;
+  }
   params.Limit = options.size;
 };
