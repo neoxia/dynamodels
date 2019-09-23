@@ -3,7 +3,7 @@ import { spawnDynamoDB } from './spawn-dynamodb';
 
 export default async (): Promise<void> => {
   try {
-    const port: number = parseInt(process.env.LOCAL_DYNAMODB_PORT, 10) || 8000;
+    const port: number = parseInt(process.env.LOCAL_DYNAMODB_PORT, 10) || 8000;
     console.log(`\nStarting dynamoDB offline on port ${port}...`);
     await spawnDynamoDB(port);
     await createTables();

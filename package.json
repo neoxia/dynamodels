@@ -7,6 +7,7 @@
   "license": "MIT",
   "repository": "https://github.com/MarioArnt/dynamodel",
   "scripts": {
+    "prettier": "npx prettier --write '{src,test}/**/*.{js,jsx,ts,tsx,json,yml}'",
     "pre:test": "npx sls dynamodb install",
     "test": "LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
     "build": "npx tsc",
@@ -24,6 +25,7 @@
     "@types/uuid": "^3.4.5",
     "jest": "^24.9.0",
     "kill-port": "^1.5.1",
+    "prettier": "^1.18.2",
     "semantic-release": "^15.13.24",
     "serverless": "^1.51.0",
     "serverless-dynamodb-local": "^0.2.38",
