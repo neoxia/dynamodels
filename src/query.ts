@@ -17,7 +17,7 @@ export class Query<T> extends Operation<T> {
    * If table has a composite key, other condition on range key can also be applied.
    * @param keyConditions : Key condition as an object of field => target value or field => { target_value, operator }
    */
-  public keys(keyConditions: IKeyConditions): Query<T>;
+  //public keys(keyConditions: IKeyConditions): Query<T>;
   /**
    * Apply key condition to the query.
    * Only "equal" operator can be used for hashkey
@@ -26,10 +26,10 @@ export class Query<T> extends Operation<T> {
    * @param keyConditions : Key condition obtained by chaining key(), and() and key oeprators method helpers
    * eq(), le(), lt(), ge(), gt() and beginsWith()
    */
-  public keys(keyConditions: KeyCondition): Query<T>;
+  //public keys(keyConditions: KeyCondition): Query<T>;
   public keys(keyConditions: IKeyConditions | KeyCondition): Query<T> {
     let builtConditions: IBuiltConditions;
-    if (keyConditions instanceof KeyCondition) {
+    if (this.isFuild(keyConditions)) {
       builtConditions = keyConditions.build();
     } else {
       builtConditions = buildKeyConditions(keyConditions);
@@ -38,6 +38,10 @@ export class Query<T> extends Operation<T> {
     this.addExpressionAttributesName(builtConditions.attributes);
     this.addExpressionAttributesValue(builtConditions.values);
     return this;
+  }
+
+  private isFuild(keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition {
+    return keyConditions instanceof KeyCondition;
   }
 
   /**

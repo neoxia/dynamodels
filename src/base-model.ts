@@ -273,7 +273,6 @@ export abstract class Model<T> {
     // Building query
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
-      KeyConditions: {},
     };
     if (indexName) {
       params.IndexName = indexName;

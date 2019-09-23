@@ -1,29 +1,20 @@
 import { Key } from './base-model';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { IkeyCondition, IFilterCondition } from './key-operators';
+import { IFilterCondition, IKeyCondition } from './operators';
 import { IBuiltConditions } from './conditions';
 import { FilterValue, IFilterConditionOperators, attr } from './filter-conditions';
+import { IKeyConditionsOperators } from './key-conditions';
 
-type IConditions = ISimpleConditions | IComplexConditions;
+type IConditions = IKeyConditions | IFilterConditions;
 
-export type IKeyConditions = ISimpleConditions | IComplexKeyConditions;
+type ICondition = IKeyCondition | IFilterCondition;
 
-export type IFilterConditions = ISimpleConditions | IComplexFilterConditions;
-
-interface IComplexKeyConditions {
-  [atributeName: string]: IkeyCondition;
+export interface IKeyConditions {
+  [key: string]: IKeyCondition | Key;
 }
 
-interface IComplexFilterConditions {
-  [atributeName: string]: IkeyCondition | IFilterCondition;
-}
-
-interface IComplexConditions {
-  [atributeName: string]: IkeyCondition | IFilterCondition;
-}
-
-interface ISimpleConditions {
-  [atributeName: string]: Key;
+export interface IFilterConditions {
+  [key: string]: IFilterCondition | FilterValue;
 }
 
 export const buildKeyConditions = (keyConditions: IKeyConditions): IBuiltConditions => buildConditions(keyConditions);
@@ -32,33 +23,37 @@ export const buildFilterConditions = (filterConditions: IFilterConditions): IBui
   buildConditions(filterConditions);
 
 const buildConditions = (keyConditions: IConditions): IBuiltConditions => {
-  if (isComplexConditions(keyConditions)) {
-    return buildComplexCondition(keyConditions);
-  }
-  return buildSimpleConditions(keyConditions);
-};
-
-const buildComplexCondition = (keyConditions: IComplexConditions): IBuiltConditions => {
   const attributes: DocumentClient.ExpressionAttributeNameMap = {};
   const values: DocumentClient.ExpressionAttributeValueMap = {};
-  const conditions: string[] = [];
+  const expressions: string[] = [];
   Object.keys(keyConditions).forEach((field) => {
-    const builtCondition = operatorToExpression(field, keyConditions[field].values, keyConditions[field].operator);
-    conditions.push(`(${builtCondition.expression})`);
-    Object.assign(attributes, builtCondition.attributes);
-    Object.assign(values, builtCondition.values);
+    if (isComplexCondition(keyConditions[field])) {
+      const condition: ICondition = keyConditions[field] as ICondition;
+      const builtCondition = operatorToExpression(field, condition.values, condition.operator);
+      expressions.push(`(${builtCondition.expression})`);
+      Object.assign(attributes, builtCondition.attributes);
+      Object.assign(values, builtCondition.values);
+    } else {
+      attributes[`#${field}`] = field;
+      values[`:${field}`] = keyConditions[field];
+      expressions.push(`(#${field} = :${field})`);
+    }
   });
   return {
-    expression: conditions.join(' AND '),
+    expression: expressions.join(' AND '),
     attributes,
     values,
   };
 };
 
+const isComplexCondition = (condition: ICondition | Key | FilterValue): condition is ICondition => {
+  return typeof condition === 'object' && (condition as ICondition).values !== undefined;
+};
+
 const operatorToExpression = (
   field: string,
   values: FilterValue[],
-  operator: IFilterConditionOperators,
+  operator: IKeyConditionsOperators | IFilterConditionOperators,
 ): IBuiltConditions => {
   switch (operator) {
     case 'NE':
@@ -67,7 +62,7 @@ const operatorToExpression = (
         .build();
     case 'IN':
       return attr(field)
-        .in(values)
+        .in(...values)
         .build();
     case 'LE':
       return attr(field)
@@ -97,6 +92,14 @@ const operatorToExpression = (
       return attr(field)
         .null()
         .build();
+    case 'EXISTS':
+      return attr(field)
+        .exists()
+        .build();
+    case 'NOT_EXISTS':
+      return attr(field)
+        .notExists()
+        .build();
     case 'CONTAINS':
       return attr(field)
         .contains(values[0] as string)
@@ -114,24 +117,4 @@ const operatorToExpression = (
         .eq(values[0])
         .build();
   }
-};
-
-const buildSimpleConditions = (keyConditions: ISimpleConditions): IBuiltConditions => {
-  const attributes: DocumentClient.ExpressionAttributeNameMap = {};
-  const values: DocumentClient.ExpressionAttributeValueMap = {};
-  const conditions: string[] = [];
-  Object.keys(keyConditions).forEach((field) => {
-    attributes[`#${field}`] = field;
-    values[`:${field}`] = keyConditions[field];
-    conditions.push(`(#${field} = :${field})`);
-  });
-  return {
-    expression: conditions.join(' AND '),
-    attributes,
-    values,
-  };
-};
-
-const isComplexConditions = (keyConditions: IConditions): keyConditions is IComplexConditions => {
-  return Object.keys(keyConditions).some((field) => (keyConditions[field] as any).operator !== undefined);
 };

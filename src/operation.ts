@@ -105,23 +105,24 @@ export abstract class Operation<T> {
   }
 
   protected addExpressionAttributesName(attributes: DocumentClient.ExpressionAttributeNameMap) {
-    if (!this.params.ExpressionAttributeNames) {
-      this.params.ExpressionAttributeNames = {};
+    if (Object.keys(attributes).length > 0) {
+      if (!this.params.ExpressionAttributeNames) {
+        this.params.ExpressionAttributeNames = {};
+      }
+      Object.assign(this.params.ExpressionAttributeNames, attributes);
     }
-    Object.assign(this.params.ExpressionAttributeNames, attributes);
   }
 
   protected addExpressionAttributesValue(values: DocumentClient.ExpressionAttributeValueMap) {
-    if (!this.params.ExpressionAttributeValues) {
-      this.params.ExpressionAttributeValues = {};
+    if (Object.keys(values).length > 0) {
+      if (!this.params.ExpressionAttributeValues) {
+        this.params.ExpressionAttributeValues = {};
+      }
+      Object.assign(this.params.ExpressionAttributeValues, values);
     }
-    Object.assign(this.params.ExpressionAttributeValues, values);
   }
 
-  public async exec(): Promise<IPaginatedResult<T>> {
-    throw Error('Not implemented');
-  }
-
+  public abstract async exec(): Promise<IPaginatedResult<T>>;
   /**
    * Fetch all results beyond the 1MB scan/query of single operation limits.
    * By iteratively fetching next 1MB page of results until last evaluated key is null
@@ -137,5 +138,9 @@ export abstract class Operation<T> {
       lastKey = result.nextPage.lastEvaluatedKey;
     } while (lastKey != null);
     return items as T[];
+  }
+
+  public getParams(): DocumentClient.ScanInput {
+    return this.params;
   }
 }

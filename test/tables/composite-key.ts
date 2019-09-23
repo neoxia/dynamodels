@@ -9,7 +9,7 @@ export const compositeTable = {
       AttributeType: 'S',
     },
     {
-      AttributeName: 'name',
+      AttributeName: 'optional_string',
       AttributeType: 'S',
     },
   ],
@@ -57,7 +57,7 @@ export const compositeTable = {
           KeyType: 'HASH',
         },
         {
-          AttributeName: 'name',
+          AttributeName: 'optional_string',
           KeyType: 'RANGE',
         },
       ],

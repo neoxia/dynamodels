@@ -1,10 +1,12 @@
 import { DynamoDB } from 'aws-sdk';
-import { compositeTable } from '../tables/compositekey';
-import { hashTable } from '../tables/hashkey';
+import { compositeTable } from '../tables/composite-key';
+import { hashTable } from '../tables/hash-key';
+import { numericalTable } from '../tables/numerical-keys';
 
 const tables: any = {
   hashTable,
   compositeTable,
+  numericalTable,
 };
 
 const dynamodb = new DynamoDB({

@@ -14,6 +14,12 @@ interface CommonFields {
   stringset: string[];
   list: Array<number | string>;
   stringmap: { [key: string]: string };
+  optional_number?: number;
+  optional_bool?: boolean;
+  optional_string?: string;
+  optional_stringset?: string[];
+  optional_list?: Array<number | string>;
+  optional_stringmap?: { [key: string]: string };
 }
 
 type HashKeyEntity = CommonFields & {
@@ -23,6 +29,11 @@ type HashKeyEntity = CommonFields & {
 type CompositeKeyEntity = CommonFields & {
   hashkey: string;
   rangekey: string;
+};
+
+type NumericalKeyEntity = CommonFields & {
+  hashkey: number;
+  rangekey: number;
 };
 
 export class HashKeyModel extends Model<HashKeyEntity> {
@@ -63,6 +74,17 @@ export class CompositeKeyModel extends Model<CompositeKeyEntity> {
   protected documentClient: DocumentClient = documentClient;
 
   constructor(item?: CompositeKeyEntity) {
+    super(item);
+  }
+}
+
+export class NumericalKeysModel extends Model<NumericalKeyEntity> {
+  protected tableName = 'table_test_numerical_composite_key';
+  protected pk = 'hashkey';
+  protected sk = 'rangekey';
+  protected documentClient: DocumentClient = documentClient;
+
+  constructor(item?: NumericalKeyEntity) {
     super(item);
   }
 }
