@@ -1,19 +1,17 @@
 {
   "name": "dynamodel",
-  "version": "0.0.7",
+  "version": "0.0.0-development",
   "description": "Typescript Overlay to easily manage AWS DynamoDB entities",
   "main": "dist/index.js",
-  "directories": {
-    "doc": "doc",
-    "test": "test"
-  },
+  "author": "Mario Arnautou",
+  "license": "MIT",
+  "repository": "https://github.com/MarioArnt/dynamodel",
   "scripts": {
     "pre:test": "npx sls dynamodb install",
     "test": "LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
-    "build": "npx tsc"
+    "build": "npx tsc",
+    "semantic-release": "semantic-release"
   },
-  "author": "Mario Arnautou",
-  "license": "MIT",
   "dependencies": {
     "@hapi/joi": "^15.1.1",
     "aws-sdk": "^2.520.0",
@@ -26,6 +24,7 @@
     "@types/uuid": "^3.4.5",
     "jest": "^24.9.0",
     "kill-port": "^1.5.1",
+    "semantic-release": "^15.13.24",
     "serverless": "^1.51.0",
     "serverless-dynamodb-local": "^0.2.38",
     "ts-jest": "^24.0.2",
