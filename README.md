@@ -32,13 +32,12 @@ export class Album extends Model<IAlbum> {
   constructor(item?: IAlbum) {
     super(item);
   }
-} 
+}
 ```
 
 Here is another example for a table with a simple hashkey:
 
-
-```typescript 
+```typescript
 interface IUser {
   email: string;
   // ..other fields
@@ -47,8 +46,7 @@ interface IUser {
 export class User extends Model<IUser> {
   protected tableName = 'my_users';
   protected hashkey = 'email';
-} 
-
+}
 ```
 
 ## Create an entity
@@ -81,7 +79,7 @@ const albums = new Album();
 
 await album.create({
   artist: 'Bob Marley & The Wailers',
-  album: 'Burnin\'',
+  album: "Burnin'",
   release_year: 1973,
   genre: ['Reggea'],
 });
@@ -107,7 +105,7 @@ export class Album extends Model<IAlbum> {
     release_year: Joi.number().required(),
     genres: Joi.array(Joi.string()).optional(),
   });
-} 
+}
 ```
 
 Model validation is automatically enforced when creating/saving entities:
@@ -116,7 +114,7 @@ Model validation is automatically enforced when creating/saving entities:
 // Will throw as release_year must be a number
 await album.save({
   artist: 'Bob Marley & The Wailers',
-  album: 'Burnin\'',
+  album: "Burnin'",
   release_year: '1973',
   genre: ['Reggea'],
 });
@@ -138,7 +136,7 @@ const albums = new Album();
 const nvrmind = await album.get('Nirvana', 'Nevermind'); // {artist: 'Nirvana', album: 'Nevermind', release_year: 1991...}
 ```
 
-*Note:* For table with a composite key, range key is mandatory. This will throw an exception.
+_Note:_ For table with a composite key, range key is mandatory. This will throw an exception.
 
 ```typescript
 await album.get('ACDC'); // Bad Request
@@ -155,7 +153,7 @@ if (await album.exists('The Fugees', 'The Score')) {
 
 ## Scan table
 
-*Note*: It is not advised to use scan operations as it is time-consuming.
+_Note_: It is not advised to use scan operations as it is time-consuming.
 
 To retrieve all the entries of a table use a DynamoDB scan operation.
 
@@ -178,7 +176,10 @@ You can use pagination helpers to get paginated result
 
 ```typescript
 const albums = new Album();
-const result = await albums.scan().paginate({size: 50}).exec();
+const result = await albums
+  .scan()
+  .paginate({ size: 50 })
+  .exec();
 ```
 
 This will return the 50 first items and the last evaluated key. To fetch the next page, simply use:
@@ -195,9 +196,12 @@ For instance to retrieve albums released after 1973 (included), use the followin
 
 ```typescript
 const albums = new Album();
-const result = await albums.scan().filter({
-  release_year: ge(1973),
-}).exec();
+const result = await albums
+  .scan()
+  .filter({
+    release_year: ge(1973),
+  })
+  .exec();
 ```
 
 The `filter` accept an object where keys are the fields on which you to filter and value can be either:
@@ -229,6 +233,8 @@ For binary, unsigned byte-wise comparison is used.
 
 Check official DynamoDB documentation for more details.
 
+### Filter Condition Builder
+
 ## Query items
 
 The library also provides helpers to build dynamoDB queries.
@@ -243,14 +249,21 @@ For instance to retrieve all the album for a given artist.
 
 ```typescript
 const albums = new Album();
-const result = await albums.query().filter({
-  artist: 'The Rolling Stones',
-}).exec();
+const result = await albums
+  .query()
+  .filter({
+    artist: 'The Rolling Stones',
+  })
+  .exec();
 ```
 
-You can combine key condition if your table has a composite key. 
+You can combine key condition if your table has a composite key.
 
 In this case both condition are applied: it is a `AND` not a `OR`.
+
+### Key condition operators
+
+### Key condition builder
 
 ### Using indexes
 
@@ -262,13 +275,16 @@ You can retrieve all the albums from Deep Purple release before 1976:
 
 ```typescript
 const albums = new Album();
-const result = await albums.query('year_index').filter({
-  artist: 'Deep Purple',
-  release_year: lt(1976)
-}).exec();
+const result = await albums
+  .query('year_index')
+  .filter({
+    artist: 'Deep Purple',
+    release_year: lt(1976),
+  })
+  .exec();
 ```
 
-*Note*: if you want to filter on a field which is also a [Amazon reserved keyword](https://docs.aws.amazon.com/fr_fr/amazondynamodb/latest/developerguide/ReservedWords.html), you will have to build the query yourself using native `DocumentClient.QueryInput` options.
+_Note_: if you want to filter on a field which is also a [Amazon reserved keyword](https://docs.aws.amazon.com/fr_fr/amazondynamodb/latest/developerguide/ReservedWords.html), you will have to build the query yourself using native `DocumentClient.QueryInput` options.
 
 ### Paginate
 
@@ -276,7 +292,11 @@ Pagination work the same way than for scan operations.
 
 ```typescript
 const albums = new Album();
-const result = await albums.query().keys({ artist: 'Dire Straits' }).paginate({size: 50}).exec();
+const result = await albums
+  .query()
+  .keys({ artist: 'Dire Straits' })
+  .paginate({ size: 50 })
+  .exec();
 ```
 
 This will return the 50 first items and the last evaluated key. To fetch the next page, simply use:
@@ -294,18 +314,25 @@ Filtering process is the same for query and scan operations. [See above](filteri
 You can use `sort` helpers to sort the result based on the range key.
 
 ```typescript
-
 const albums = new Album();
 
 // From oldest to newest
-const result = await albums.query('year_index').filter({
-  artist: 'James brown',
-}).sort('asc').exec();
+const result = await albums
+  .query('year_index')
+  .filter({
+    artist: 'James brown',
+  })
+  .sort('asc')
+  .exec();
 
 // From newest to oldest
-const result = await albums.query('year_index').filter({
-  artist: 'James brown',
-}).sort('desc').exec();
+const result = await albums
+  .query('year_index')
+  .filter({
+    artist: 'James brown',
+  })
+  .sort('desc')
+  .exec();
 ```
 
 ## Batch get
@@ -315,11 +342,11 @@ To perform a batch get operations, simply give the keys in argument:
 ```typescript
 const albums = new Album();
 const result = await albums.batchGet([
-  {artist: 'Janis Joplin', album: 'I Got Dem Ol\' Kozmic Blues Again Mama!'},
-  {artist: 'Creedence Clearwater Revival', album: 'Willy and the Poor Boys'},
-  {artist: 'The Beatles', album: 'Sgt. Pepper\'s Lonely Hearts Club Band'},
-  {artist: 'Queen', album: 'A Night at the Opera'},
-  {artist: 'The Clash', album: ' London Calling'},
+  { artist: 'Janis Joplin', album: "I Got Dem Ol' Kozmic Blues Again Mama!" },
+  { artist: 'Creedence Clearwater Revival', album: 'Willy and the Poor Boys' },
+  { artist: 'The Beatles', album: "Sgt. Pepper's Lonely Hearts Club Band" },
+  { artist: 'Queen', album: 'A Night at the Opera' },
+  { artist: 'The Clash', album: ' London Calling' },
 ]);
 ```
 
@@ -372,5 +399,3 @@ Table has a composite key:
 const albums = new Album();
 await album.delete('Nirvana', 'Nevermind');
 ```
-
-

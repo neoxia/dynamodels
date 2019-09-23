@@ -1,10 +1,12 @@
 import { DynamoDB } from 'aws-sdk';
-import { compositeTable } from '../tables/compositekey';
-import { hashTable } from '../tables/hashkey';
+import { compositeTable } from '../tables/composite-key';
+import { hashTable } from '../tables/hash-key';
+import { numericalTable } from '../tables/numerical-keys';
 
 const tables: any = {
   hashTable,
   compositeTable,
+  numericalTable,
 };
 
 const dynamodb = new DynamoDB({
@@ -12,15 +14,14 @@ const dynamodb = new DynamoDB({
   endpoint: `http://localhost:${process.env.LOCAL_DYNAMODB_PORT}`,
 });
 
-export const clearTables = async () =>{
+export const clearTables = async () => {
   await deleteTables();
   return createTables();
-}
+};
 
 export const deleteTables = async () => {
   return Promise.all(
     Object.keys(tables).map((tableName: string) => {
-      console.log(`Deleting table ${tables[tableName].TableName}...`);
       return dynamodb
         .deleteTable({
           TableName: tables[tableName].TableName,
@@ -33,7 +34,6 @@ export const deleteTables = async () => {
 export const createTables = async () => {
   return Promise.all(
     Object.keys(tables).map((tableName: string) => {
-      console.log(`Creating table ${tables[tableName].TableName}...`);
       return dynamodb
         .createTable(tables[tableName])
         .promise()

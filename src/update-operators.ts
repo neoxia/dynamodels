@@ -14,7 +14,7 @@ export interface IUpdateActions {
 export const buildUpdateActions = (updateActions: IUpdateActions): DocumentClient.AttributeUpdates => {
   const actions = {};
   Object.keys(updateActions).forEach((field) => {
-    actions[field] = {
+    (actions as any)[field] = {
       Action: updateActions[field].action,
       Value: updateActions[field].value,
     };

@@ -20,7 +20,7 @@ describe('The create method', () => {
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
   });
-  test('should throw an error if not item is held by the class', async () => {
+  test.skip('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();
     try {
       await foo.create();

@@ -1,4 +1,4 @@
-import { ObjectSchema, validate, ValidationError as JoiValidationError} from '@hapi/joi';
+import { ObjectSchema, validate, ValidationError as JoiValidationError } from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
@@ -56,8 +56,8 @@ export abstract class Model<T> {
     const putOptions: Partial<DocumentClient.PutItemInput> =
       item_options != null && this.isItem(item_options) ? options : item_options;
     // Extract keys
-    const pk = toCreate[this.pk];
-    const sk = this.sk != null ? toCreate[this.sk] : null;
+    const pk = (toCreate as any)[this.pk];
+    const sk = this.sk != null ? (toCreate as any)[this.sk] : null;
     // Prevent overwritting of existing item
     if (await this.exists(pk, sk)) {
       const error = new Error(`Item (hashkey=${pk}${sk != null ? `, rangekey= ${sk}` : ''}) already exists`);
@@ -223,6 +223,9 @@ export abstract class Model<T> {
       sk_options != null && this.isKey(sk_options) ? options : (sk_options as Partial<DocumentClient.DeleteItemInput>);
     // Build delete item params
     this.testKeys(pk, sk);
+    if (!(await this.exists(pk, sk))) {
+      throw new Error('Item to delete does not exists');
+    }
     const params: DocumentClient.DeleteItemInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
@@ -238,7 +241,7 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
-  public async scan(options?: Partial<DocumentClient.ScanInput>): Promise<Scan<T>> {
+  public scan(options?: Partial<DocumentClient.ScanInput>): Scan<T> {
     // Building scan parameters
     const params: DocumentClient.ScanInput = {
       TableName: this.tableName,
@@ -270,7 +273,6 @@ export abstract class Model<T> {
     // Building query
     const params: DocumentClient.QueryInput = {
       TableName: this.tableName,
-      KeyConditions: {},
     };
     if (indexName) {
       params.IndexName = indexName;
@@ -287,7 +289,7 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns the batch get operation result
    */
-  public async batchGet(
+  private async _batchGet(
     keys: Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
@@ -313,7 +315,7 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns all the matching items
    */
-  public async batchGetAll(
+  public async batchGet(
     keys: Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
@@ -326,7 +328,7 @@ export abstract class Model<T> {
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
       batches.map((batch: Array<{ pk: any; sk?: any }>) => {
-        return this.batchGet(batch, options);
+        return this._batchGet(batch, options);
       }),
     );
     // Flatten batches of responses in array of users' data
