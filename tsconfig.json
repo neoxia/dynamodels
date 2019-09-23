@@ -27,9 +27,9 @@
     "pretty": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "lib": ["es2017"],
+    "lib": ["es2017"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"],
-  "compileOnSave": false,
+  "compileOnSave": false
 }
