@@ -10,6 +10,14 @@ Dynamodels is a dead simple typescript overlay to easily manage DynamoDB CRUD op
 
 It provides helpers for pagination, filtering, sorting and more !
 
+## Installation
+
+Install `dynamodels` package from NPM public registry.
+
+- Using npm: `npm i dynamodels`
+
+- Using yarn: `yarn add dynamodels`
+
 ## Getting started
 
 The only thing you need to do is extending base model class `Model<T>` providing a type defintion for your entity, a table name, a hashkey, and optionally, a range key.
@@ -17,6 +25,9 @@ The only thing you need to do is extending base model class `Model<T>` providing
 Here is an example for table with a composite key:
 
 ```typescript
+// Import dynamodels Base Model
+import Model from 'dynamodels';
+
 // Type definition for your entity
 interface IAlbum {
   artist: string;
@@ -42,6 +53,8 @@ export class Album extends Model<IAlbum> {
 Here is another example for a table with a simple hashkey:
 
 ```typescript
+import Model from 'dynamodels';
+
 interface IUser {
   email: string;
   // ..other fields
