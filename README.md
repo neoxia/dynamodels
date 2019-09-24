@@ -1,12 +1,12 @@
-# Dynamodel
+# Dynamodels
 
-[![Build Status](https://travis-ci.org/MarioArnt/dynamodel.svg?branch=master)](https://travis-ci.org/MarioArnt/dynamodel)
-[![codecov](https://codecov.io/gh/MarioArnt/dynamodel/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodel)
+[![Build Status](https://travis-ci.org/MarioArnt/dynamodels.svg?branch=master)](https://travis-ci.org/MarioArnt/dynamodels)
+[![codecov](https://codecov.io/gh/MarioArnt/dynamodels/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodels)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodel/master/logo.svg?sanitize=true)
+![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodels/master/logo.svg?sanitize=true)
 
-Dynamodel is a dead simple typescript overlay to easily manage DynamoDB CRUD operations.
+Dynamodels is a dead simple typescript overlay to easily manage DynamoDB CRUD operations.
 
 It provides helpers for pagination, filtering, sorting and more !
 
@@ -356,7 +356,7 @@ const result = await albums.batchGet([
 
 Batch get operations are limited to 100 items.
 
-Under the hood, if you give more than 100 keys or keys pair, dynamodel will split the operation in chunks of 100 items.
+Under the hood, if you give more than 100 keys or keys pair, dynamodels will split the operation in chunks of 100 items.
 
 For instance a batchGet operation with 642 keys will be automatically split in 7 batches.
 

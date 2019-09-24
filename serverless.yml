@@ -1,4 +1,4 @@
-service: dynamodel-tests
+service: dynamodels-tests
 
 provider:
   name: aws
