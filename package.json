@@ -1,11 +1,14 @@
 {
-  "name": "dynamodel",
-  "version": "0.0.0-development",
+  "name": "@neoxia/dynamodel",
+  "version": "1.0.0-beta",
   "description": "Typescript Overlay to easily manage AWS DynamoDB entities",
   "main": "dist/index.js",
   "author": "Mario Arnautou",
   "license": "MIT",
   "repository": "https://github.com/MarioArnt/dynamodel",
+  "publishConfig": {
+    "tag": "beta"
+  },
   "scripts": {
     "prettier": "npx prettier --write '{src,test}/**/*.{js,jsx,ts,tsx,json,yml}'",
     "lint": "npx eslint '{src,test}**/*'",
