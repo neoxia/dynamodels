@@ -1,5 +1,7 @@
 # Dynamodel
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/MarioArnt/dynamodel.svg)](https://greenkeeper.io/)
+
 ![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodel/master/logo.svg?sanitize=true)
 
 Dynamodel is a dead simple typescript overlay to easily manage DynamoDB CRUD operations.
