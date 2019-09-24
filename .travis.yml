@@ -14,6 +14,8 @@ jobs:
         - npm run lint
         - npm run pre:test
         - npm test
+      after_success:
+        - npx codecov
       skip_cleanup: true
     - stage: Build & publish
       script:
