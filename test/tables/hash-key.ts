@@ -1,4 +1,4 @@
-export const hashTable = {
+export default {
   AttributeDefinitions: [
     {
       AttributeName: 'hashkey',

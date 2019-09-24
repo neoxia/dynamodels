@@ -1,4 +1,4 @@
-export const numericalTable = {
+export default {
   AttributeDefinitions: [
     {
       AttributeName: 'hashkey',
@@ -9,7 +9,7 @@ export const numericalTable = {
       AttributeType: 'N',
     },
     {
-      AttributeName: 'optional_number',
+      AttributeName: 'optionalNumber',
       AttributeType: 'N',
     },
   ],
@@ -57,7 +57,7 @@ export const numericalTable = {
           KeyType: 'HASH',
         },
         {
-          AttributeName: 'optional_number',
+          AttributeName: 'optionalNumber',
           KeyType: 'RANGE',
         },
       ],

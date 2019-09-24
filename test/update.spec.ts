@@ -1,3 +1,4 @@
+/* eslint-env node, jest */
 describe('The update method', () => {
   test.todo('should update the item with the correct actions');
   test.todo('should throw if item doest not exist');

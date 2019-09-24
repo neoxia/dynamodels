@@ -1,5 +1,15 @@
 {
   "extends": ["airbnb-base"],
   "plugins": ["@typescript-eslint"],
-  "parser": "@typescript-eslint/parser"
+  "parser": "@typescript-eslint/parser",
+  "env": {
+    "node": true
+  },
+  "rules": {
+    "camelcase": "warn",
+    "no-dupe-class-members": "off",
+    "implicit-arrow-linebreak": "off",
+    "operator-linebreak": "off",
+    "function-paren-newline": "off"
+  }
 }

@@ -1,7 +1,9 @@
+/* eslint-disable import/no-unresolved,no-unused-vars */
 import { DynamoDB } from 'aws-sdk';
-import { compositeTable } from '../tables/composite-key';
-import { hashTable } from '../tables/hash-key';
-import { numericalTable } from '../tables/numerical-keys';
+import compositeTable from '../tables/composite-key';
+import hashTable from '../tables/hash-key';
+import numericalTable from '../tables/numerical-keys';
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
 const tables: any = {
   hashTable,
@@ -11,30 +13,24 @@ const tables: any = {
 
 const dynamodb = new DynamoDB({
   region: 'localhost',
-  endpoint: `http://localhost:${process.env.LOCAL_DYNAMODB_PORT}`,
+  endpoint: `http://localhost:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
 });
 
-export const clearTables = async () => {
-  await deleteTables();
-  return createTables();
-};
-
-export const deleteTables = async () => {
-  return Promise.all(
-    Object.keys(tables).map((tableName: string) => {
-      return dynamodb
+export const deleteTables = async () =>
+  Promise.all(
+    Object.keys(tables).map((tableName: string) =>
+      dynamodb
         .deleteTable({
           TableName: tables[tableName].TableName,
         })
-        .promise();
-    }),
+        .promise(),
+    ),
   );
-};
 
-export const createTables = async () => {
-  return Promise.all(
-    Object.keys(tables).map((tableName: string) => {
-      return dynamodb
+export const createTables = async () =>
+  Promise.all(
+    Object.keys(tables).map((tableName: string) =>
+      dynamodb
         .createTable(tables[tableName])
         .promise()
         .catch((err) => {
@@ -42,7 +38,11 @@ export const createTables = async () => {
             return;
           }
           throw err;
-        });
-    }),
+        }),
+    ),
   );
+
+export const clearTables = async () => {
+  await deleteTables();
+  return createTables();
 };

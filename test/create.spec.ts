@@ -1,5 +1,10 @@
+/* eslint-env node, jest */
+/* eslint-disable import/no-unresolved,no-unused-vars */
 import { clearTables } from './hooks/create-tables';
-import { HashKeyModel, HashKeyJoiModel, CompositeKeyModel } from './test-models';
+import HashKeyModel from './models/hashkey';
+import HashKeyJoiModel from './models/hashkey-joi';
+import CompositeKeyModel from './models/composite-keys';
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe('The create method', () => {
   beforeEach(async () => {
@@ -24,6 +29,7 @@ describe('The create method', () => {
     const foo = new HashKeyModel();
     try {
       await foo.create();
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('No item to save')).toBe(true);
@@ -50,6 +56,7 @@ describe('The create method', () => {
         bool: true,
         list: ['foo', 42],
       });
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('already exists')).toBe(true);
@@ -67,6 +74,7 @@ describe('The create method', () => {
     });
     try {
       await foo.create();
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('Validation error')).toBe(true);
@@ -124,6 +132,7 @@ describe('The create method [1st overload]', () => {
     await foo.save(item);
     try {
       await foo.create(item);
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('already exists')).toBe(true);
@@ -141,6 +150,7 @@ describe('The create method [1st overload]', () => {
         bool: true,
         list: ['foo', 42],
       });
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('Validation error')).toBe(true);

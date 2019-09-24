@@ -1,4 +1,4 @@
-export const compositeTable = {
+export default {
   AttributeDefinitions: [
     {
       AttributeName: 'hashkey',
@@ -9,7 +9,7 @@ export const compositeTable = {
       AttributeType: 'S',
     },
     {
-      AttributeName: 'optional_string',
+      AttributeName: 'optionalString',
       AttributeType: 'S',
     },
   ],
@@ -57,7 +57,7 @@ export const compositeTable = {
           KeyType: 'HASH',
         },
         {
-          AttributeName: 'optional_string',
+          AttributeName: 'optionalString',
           KeyType: 'RANGE',
         },
       ],

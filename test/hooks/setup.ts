@@ -1,5 +1,7 @@
+/* eslint-disable import/no-unresolved,no-unused-vars,no-console */
 import { createTables } from './create-tables';
-import { spawnDynamoDB } from './spawn-dynamodb';
+import spawnDynamoDB from './spawn-dynamodb';
+/* eslint-disable import/no-unresolved,no-unused-vars */
 
 export default async (): Promise<void> => {
   try {

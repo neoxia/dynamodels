@@ -1,5 +1,9 @@
+/* eslint-env node, jest */
+/* eslint-disable import/no-unresolved,no-unused-vars */
 import { clearTables } from './hooks/create-tables';
-import { HashKeyModel, HashKeyJoiModel } from './test-models';
+import HashKeyModel from './models/hashkey';
+import HashKeyJoiModel from './models/hashkey-joi';
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe('The save method', () => {
   beforeEach(async () => {
@@ -24,6 +28,7 @@ describe('The save method', () => {
     const foo = new HashKeyModel();
     try {
       await foo.save();
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('No item to save')).toBe(true);
@@ -41,6 +46,7 @@ describe('The save method', () => {
     });
     try {
       await foo.save();
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('Validation error')).toBe(true);
@@ -94,6 +100,7 @@ describe('The save method [1st overload]', () => {
         bool: true,
         list: ['foo', 42],
       });
+      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect(e.message.includes('Validation error')).toBe(true);

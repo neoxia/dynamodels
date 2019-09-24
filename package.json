@@ -8,6 +8,8 @@
   "repository": "https://github.com/MarioArnt/dynamodel",
   "scripts": {
     "prettier": "npx prettier --write '{src,test}/**/*.{js,jsx,ts,tsx,json,yml}'",
+    "lint": "npx eslint '{src,test}**/*'",
+    "pre:commit": "npm run prettier && npm run lint",
     "pre:test": "npx sls dynamodb install",
     "test": "LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
     "build": "npx tsc",
@@ -25,7 +27,8 @@
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.3",
     "@types/uuid": "^3.4.5",
-    "@typescript-eslint/parser": "^2.3.0",
+    "@typescript-eslint/eslint-plugin": "^2.3.1",
+    "@typescript-eslint/parser": "^2.3.1",
     "commitizen": "^4.0.3",
     "cz-conventional-changelog": "^3.0.2",
     "eslint": "^6.4.0",
@@ -49,7 +52,7 @@
   "husky": {
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "pre-commit": "npm run prettier"
+      "pre-commit": "npm run pre:commit"
     }
   },
   "config": {

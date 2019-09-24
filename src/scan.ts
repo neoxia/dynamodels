@@ -1,12 +1,10 @@
+/* eslint-disable import/no-unresolved,no-unused-vars */
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { Operation, IPaginatedResult } from './operation';
+import Operation, { IPaginatedResult } from './operation';
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
-export class Scan<T> extends Operation<T> {
+export default class Scan<T> extends Operation<T> {
   protected params: DocumentClient.ScanInput;
-
-  constructor(documentClient: DocumentClient, params: DocumentClient.ScanInput) {
-    super(documentClient, params);
-  }
 
   /**
    * Scan items in the limit of 1MB

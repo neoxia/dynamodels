@@ -1,28 +1,31 @@
-import { ObjectSchema, validate, ValidationError as JoiValidationError } from '@hapi/joi';
+/* eslint-disable import/no-unresolved,no-unused-vars */
+import { ObjectSchema, validate } from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { Query } from './query';
-import { Scan } from './scan';
+import Query from './query';
+import Scan from './scan';
 import { IUpdateActions, buildUpdateActions } from './update-operators';
+import ValidationError from './validation-error';
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
 export type Key = string | number | Buffer;
 
-class ValidationError extends Error {
-  details: JoiValidationError;
-  constructor(message: string, details: JoiValidationError) {
-    super(message);
-    this.name = 'ValidationError';
-    this.details = details;
-  }
-}
+const isKey = (key: Key | Object): key is Key =>
+  typeof key !== 'object' || key.constructor === Buffer;
 
-export abstract class Model<T> {
+/* eslint-disable camelcase */
+export default abstract class Model<T> {
   protected tableName: string;
+
   protected item: T;
+
   protected pk: string;
+
   protected sk: string;
+
   protected documentClient: DocumentClient;
+
   protected schema: ObjectSchema;
 
   constructor(item?: T) {
@@ -37,22 +40,26 @@ export abstract class Model<T> {
   }
 
   /**
-   * Create the item hold by the class. Prevent overwritting of an existing item with the same key(s).
+   * Create the item hold by the class. Prevent overwritting of an existing
+   * item with the same key(s).
    * @param options Additional options supported by AWS document client put operation.
    */
   public async create(options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+
   /**
    * Create an item. Prevent overwritting of an existing item with the same key(s).
    * @param item The item to create
    * @param options Additional options supported by AWS document client put operation.
    */
   public async create(item: T, options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+
   public async create(
     item_options?: T | Partial<DocumentClient.PutItemInput>,
     options?: Partial<DocumentClient.PutItemInput>,
   ): Promise<T> {
     // Handle typescript method overloading
-    const toCreate: T = item_options != null && this.isItem(item_options) ? item_options : this.item;
+    const toCreate: T =
+      item_options != null && this.isItem(item_options) ? item_options : this.item;
     const putOptions: Partial<DocumentClient.PutItemInput> =
       item_options != null && this.isItem(item_options) ? options : item_options;
     // Extract keys
@@ -60,7 +67,9 @@ export abstract class Model<T> {
     const sk = this.sk != null ? (toCreate as any)[this.sk] : null;
     // Prevent overwritting of existing item
     if (await this.exists(pk, sk)) {
-      const error = new Error(`Item (hashkey=${pk}${sk != null ? `, rangekey= ${sk}` : ''}) already exists`);
+      const error = new Error(
+        `Item (hashkey=${pk}${sk != null ? `, rangekey= ${sk}` : ''}) already exists`,
+      );
       error.name = 'EALREADYEXISTS';
       throw error;
     }
@@ -73,16 +82,19 @@ export abstract class Model<T> {
   }
 
   /**
-   * Save the item hold by the class. Overwrite of an existing item with the same key(s) if it exists.
+   * Save the item hold by the class. Overwrite of an existing item with the same key(s)
+   * if it exists.
    * @param options Additional options supported by AWS document client put operation.
    */
   public async save(options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+
   /**
    * Save an item. Overwrite of an existing item with the same key(s) if it exists.
    * @param item The item to save
    * @param options Additional options supported by AWS document client put operation.
    */
   public async save(item: T, options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+
   public async save(
     item_options?: T | Partial<DocumentClient.PutItemInput>,
     options?: Partial<DocumentClient.PutItemInput>,
@@ -122,6 +134,7 @@ export abstract class Model<T> {
    * @returns The matching item
    */
   public async get(pk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
+
   /**
    * Get a single item by hash key and range key
    * @param pk : The hash key value
@@ -130,15 +143,18 @@ export abstract class Model<T> {
    * @returns The matching item
    */
   public async get(pk: Key, sk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
+
   public async get(
     pk: any,
     sk_options?: Partial<DocumentClient.GetItemInput> | Key,
     options?: Partial<DocumentClient.GetItemInput>,
   ): Promise<T> {
     // Handle method overloading
-    const sk: Key = sk_options != null && this.isKey(sk_options) ? sk_options : null;
+    const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
     const getOptions: Partial<DocumentClient.GetItemInput> =
-      sk_options != null && this.isKey(sk_options) ? options : (sk_options as Partial<DocumentClient.GetItemInput>);
+      sk_options != null && isKey(sk_options)
+        ? options
+        : (sk_options as Partial<DocumentClient.GetItemInput>);
     // Prepare getItem operation
     this.testKeys(pk, sk);
     const params: DocumentClient.GetItemInput = {
@@ -152,9 +168,8 @@ export abstract class Model<T> {
     const result = await this.documentClient.get(params).promise();
     if (result && result.Item) {
       return result.Item as T;
-    } else {
-      return null;
     }
+    return null;
   }
 
   private testKeys(pk: Key, sk?: Key) {
@@ -166,10 +181,6 @@ export abstract class Model<T> {
     }
   }
 
-  private isKey(key: Key | Object): key is Key {
-    return typeof key !== 'object' || key.constructor === Buffer;
-  }
-
   /**
    * Check if an item exist by keys
    * @param pk : The hash key value
@@ -177,6 +188,7 @@ export abstract class Model<T> {
    * @returns true if item exists, false otherwise
    */
   public async exists(pk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<boolean>;
+
   /**
    * Check if an item exist by keys
    * @param pk : The hash key value
@@ -184,8 +196,17 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
-  public async exists(pk: Key, sk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<boolean>;
-  public async exists(pk: Key, sk_options?: any, options?: Partial<DocumentClient.GetItemInput>): Promise<boolean> {
+  public async exists(
+    pk: Key,
+    sk: Key,
+    options?: Partial<DocumentClient.GetItemInput>,
+  ): Promise<boolean>;
+
+  public async exists(
+    pk: Key,
+    sk_options?: any,
+    options?: Partial<DocumentClient.GetItemInput>,
+  ): Promise<boolean> {
     const req = await this.get(pk, sk_options, options);
     return req != null;
   }
@@ -200,6 +221,7 @@ export abstract class Model<T> {
     pk: Key,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
+
   /**
    * Delete a single item by key
    * @param pk : The hash key value
@@ -212,15 +234,18 @@ export abstract class Model<T> {
     sk: Key,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
+
   public async delete(
     pk: Key,
     sk_options?: Key | Partial<DocumentClient.DeleteItemInput>,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
     // Handle method overloading
-    const sk: Key = sk_options != null && this.isKey(sk_options) ? sk_options : null;
+    const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
     const deleteOptions: Partial<DocumentClient.GetItemInput> =
-      sk_options != null && this.isKey(sk_options) ? options : (sk_options as Partial<DocumentClient.DeleteItemInput>);
+      sk_options != null && isKey(sk_options)
+        ? options
+        : (sk_options as Partial<DocumentClient.DeleteItemInput>);
     // Build delete item params
     this.testKeys(pk, sk);
     if (!(await this.exists(pk, sk))) {
@@ -255,17 +280,22 @@ export abstract class Model<T> {
   /**
    * Peform a query operation.
    * @param options The query options expected by AWS document client.
-   * @returns The items matching the keys conditions, in the limit of 1MB, and the last evaluated key.
+   * @returns The items matching the keys conditions, in the limit of 1MB,
+   * and the last evaluated key.
    */
   public query(index?: string): Query<T>;
+
   public query(options?: Partial<DocumentClient.QueryInput>): Query<T>;
+
   public query(index?: string, options?: Partial<DocumentClient.QueryInput>): Query<T>;
+
   public query(
     index_options?: string | Partial<DocumentClient.QueryInput>,
     options?: Partial<DocumentClient.QueryInput>,
   ): Query<T> {
     // Handle overloading
-    const indexName: string = index_options != null && typeof index_options === 'string' ? index_options : null;
+    const indexName: string =
+      index_options != null && typeof index_options === 'string' ? index_options : null;
     const queryOptions: Partial<DocumentClient.QueryInput> =
       index_options != null && typeof index_options === 'string'
         ? options
@@ -289,7 +319,7 @@ export abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns the batch get operation result
    */
-  private async _batchGet(
+  private async getSingleBatch(
     keys: Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
@@ -322,14 +352,13 @@ export abstract class Model<T> {
     // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
     const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
       const chunk = Math.floor(idx / 100);
-      all[chunk] = [].concat(all[chunk] || [], one);
-      return all;
+      const currentBatches = all;
+      currentBatches[chunk] = [].concat(all[chunk] || [], one);
+      return currentBatches;
     }, []);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
-      batches.map((batch: Array<{ pk: any; sk?: any }>) => {
-        return this._batchGet(batch, options);
-      }),
+      batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
     );
     // Flatten batches of responses in array of users' data
     return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
@@ -339,19 +368,21 @@ export abstract class Model<T> {
     pk: Key,
     actions: IUpdateActions,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
+
   public async update(
     pk: Key,
     sk: Key,
     actions: IUpdateActions,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
+
   public async update(
     pk: Key,
     sk_actions: Key | IUpdateActions,
     actions?: IUpdateActions,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> {
     // Handle overloading
-    const sk: Key = this.isKey(sk_actions) ? sk_actions : null;
-    const updateActions: IUpdateActions = this.isKey(sk_actions) ? actions : sk_actions;
+    const sk: Key = isKey(sk_actions) ? sk_actions : null;
+    const updateActions: IUpdateActions = isKey(sk_actions) ? actions : sk_actions;
     // Build updateItem params
     this.testKeys(pk, sk);
     const params: DocumentClient.UpdateItemInput = {

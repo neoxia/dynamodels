@@ -1,17 +1,19 @@
-import { CompositeKeyModel } from './test-models';
+/* eslint-env node, jest */
+/* eslint-disable import/no-unresolved,no-unused-vars */
+import generateData from './factories';
+import CompositeKeyModel from './models/composite-keys';
 import { clearTables } from './hooks/create-tables';
 import { IPaginationOptions } from '../src/paginate';
-import { Model } from '../src/base-model';
 import {
   eq,
   neq,
-  _in,
+  isIn,
   le,
   lt,
   ge,
   gt,
   between,
-  _null,
+  isNull,
   notNull,
   notExists,
   exists,
@@ -20,43 +22,7 @@ import {
   beginsWith,
 } from '../src/operators';
 import { attr, not } from '../src/filter-conditions';
-
-const generateData = async (model: Model<any>, nbEntries: number): Promise<any[]> => {
-  const promises: Array<Promise<any>> = [];
-  for (let i = 0; i < nbEntries; ++i) {
-    promises.push(
-      model.save({
-        hashkey: `hashkey-${i}`,
-        rangekey: `rangekey-${i}`,
-        number: i % 2 == 0 ? i : null,
-        bool: i % 3 === 0 ? true : i % 3 === 1 ? false : null,
-        string: i % 2 == 0 ? `string-${i}` : null,
-        stringset: i % 2 == 0 ? [`string-${i}-0`, `string-${i}-1`, `string-${i}-2`] : null,
-        list: i % 2 == 0 ? [i, `item-${i}`] : null,
-        stringmap:
-          i % 2 == 0
-            ? {
-                [`key-${i}`]: `value-${i}`,
-              }
-            : null,
-        optional_number: i % 2 == 0 ? i : undefined,
-        optional_bool: i % 2 === 0 ? true : undefined,
-        optional_string: i % 2 == 0 ? `string-${i}` : undefined,
-        optional_stringset: i % 2 == 0 ? [`string-${i}-0`, `string-${i}-1`, `string-${i}-2`] : undefined,
-        optional_list: i % 2 == 0 ? [i, `item-${i}`] : undefined,
-        optional_stringmap:
-          i % 2 == 0
-            ? {
-                [`key-${i}`]: `value-${i}`,
-              }
-            : undefined,
-      }),
-    );
-  }
-  await Promise.all(promises).catch((e) => console.error(e));
-  const check = await model.scan().execAll();
-  return check;
-};
+/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe.skip('The scan method', () => {
   const model = new CompositeKeyModel();
@@ -91,7 +57,6 @@ describe('The scan method [pagination]', () => {
       .paginate({ size: 50 })
       .exec();
     nextPage = page1.nextPage;
-    //expect(page1.count).toBe(nbEntries);
     expect(page1.items.length).toBe(50);
     expect(page1.nextPage.lastEvaluatedKey).toBeTruthy();
     expect(page1.nextPage.size).toBe(50);
@@ -102,7 +67,6 @@ describe('The scan method [pagination]', () => {
       .paginate(nextPage)
       .exec();
     nextPage = page2.nextPage;
-    // expect(page2.count).toBe(nbEntries);
     expect(page2.items.length).toBe(50);
     expect(page2.nextPage.lastEvaluatedKey).toBeTruthy();
     expect(page2.nextPage.size).toBe(50);
@@ -215,7 +179,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          string: _in('string-2', 'string-12', 'string-14', 'string-0'),
+          string: isIn('string-2', 'string-12', 'string-14', 'string-0'),
         })
         .exec();
       expect(result.count).toBe(4);
@@ -229,7 +193,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          number: _in(2, 12, 14, 0),
+          number: isIn(2, 12, 14, 0),
         })
         .exec();
       expect(result.count).toBe(4);
@@ -243,7 +207,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          bool: _in(true, false),
+          bool: isIn(true, false),
         })
         .exec();
       expect(result.count).toBe(14);
@@ -377,7 +341,9 @@ describe('The scan method [filtering / object synthax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
       expect(
-        result.items.every((i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0),
+        result.items.every(
+          (i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0,
+        ),
       ).toBe(true);
     });
     test('should return items where BETWEEN condition is true [number]', async () => {
@@ -399,73 +365,73 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          optional_string: notExists(),
+          optionalString: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_string == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalString == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [number]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_number: notExists(),
+          optionalNumber: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_number == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalNumber == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [boolean]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_bool: notExists(),
+          optionalBool: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_bool == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalBool == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [list]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_list: notExists(),
+          optionalList: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_list == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalList == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [stringset]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_stringset: notExists(),
+          optionalStringset: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringset == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringset == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [stringmap]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_stringmap: notExists(),
+          optionalStringmap: notExists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringmap == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringmap == null)).toBe(true);
     });
   });
   describe('EXISTS', () => {
@@ -473,73 +439,73 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          optional_string: exists(),
+          optionalString: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_string !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalString !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [number]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_number: exists(),
+          optionalNumber: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_number !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalNumber !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [boolean]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_bool: exists(),
+          optionalBool: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_bool !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalBool !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [list]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_list: exists(),
+          optionalList: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_list !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalList !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [stringset]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_stringset: exists(),
+          optionalStringset: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringset !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringset !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [stringmap]', async () => {
       const result = await model
         .scan()
         .filter({
-          optional_stringmap: exists(),
+          optionalStringmap: exists(),
         })
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringmap !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringmap !== undefined)).toBe(true);
     });
   });
   describe('NOT_NULL', () => {
@@ -621,7 +587,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          string: _null(),
+          string: isNull(),
         })
         .exec();
       expect(result.count).toBe(10);
@@ -633,7 +599,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          number: _null(),
+          number: isNull(),
         })
         .exec();
       expect(result.count).toBe(10);
@@ -645,7 +611,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          bool: _null(),
+          bool: isNull(),
         })
         .exec();
       expect(result.count).toBe(6);
@@ -657,7 +623,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          list: _null(),
+          list: isNull(),
         })
         .exec();
       expect(result.count).toBe(10);
@@ -669,7 +635,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          stringset: _null(),
+          stringset: isNull(),
         })
         .exec();
       expect(result.count).toBe(10);
@@ -681,7 +647,7 @@ describe('The scan method [filtering / object synthax]', () => {
       const result = await model
         .scan()
         .filter({
-          stringmap: _null(),
+          stringmap: isNull(),
         })
         .exec();
       expect(result.count).toBe(10);
@@ -744,7 +710,9 @@ describe('The scan method [filtering / object synthax]', () => {
     expect(result.count).toBe(2);
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(result.items.length).toBe(2);
-    expect(result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12)).toBe(true);
+    expect(
+      result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12),
+    ).toBe(true);
   });
 });
 
@@ -961,7 +929,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
       expect(
-        result.items.every((i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0),
+        result.items.every(
+          (i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0,
+        ),
       ).toBe(true);
     });
     test('should return items where BETWEEN condition is true [number]', async () => {
@@ -981,124 +951,124 @@ describe('The scan method [filtering / fluid synthax]', () => {
     test('should return items where NOT_EXISTS condition is true [string]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_string').notExists())
+        .filter(attr('optionalString').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_string == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalString == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [number]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_number').notExists())
+        .filter(attr('optionalNumber').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_number == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalNumber == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [boolean]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_bool').notExists())
+        .filter(attr('optionalBool').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_bool == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalBool == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [list]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_list').notExists())
+        .filter(attr('optionalList').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_list == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalList == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [stringset]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_stringset').notExists())
+        .filter(attr('optionalStringset').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringset == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringset == null)).toBe(true);
     });
     test('should return items where NOT_EXISTS condition is true [stringmap]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_stringmap').notExists())
+        .filter(attr('optionalStringmap').notExists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringmap == null)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringmap == null)).toBe(true);
     });
   });
   describe('EXISTS', () => {
     test('should return items where EXISTS condition is true [string]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_string').exists())
+        .filter(attr('optionalString').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_string !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalString !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [number]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_number').exists())
+        .filter(attr('optionalNumber').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_number !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalNumber !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [boolean]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_bool').exists())
+        .filter(attr('optionalBool').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_bool !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalBool !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [list]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_list').exists())
+        .filter(attr('optionalList').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_list !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalList !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [stringset]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_stringset').exists())
+        .filter(attr('optionalStringset').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringset !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringset !== undefined)).toBe(true);
     });
     test('should return items where EXISTS condition is true [stringmap]', async () => {
       const result = await model
         .scan()
-        .filter(attr('optional_stringmap').exists())
+        .filter(attr('optionalStringmap').exists())
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.optional_stringmap !== undefined)).toBe(true);
+      expect(result.items.every((i) => i.optionalStringmap !== undefined)).toBe(true);
     });
   });
   describe('NOT_NULL', () => {
@@ -1274,7 +1244,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.string.match(/^string-1/) || i.string.includes('ing-4'))).toBe(true);
+      expect(
+        result.items.every((i) => i.string.match(/^string-1/) || i.string.includes('ing-4')),
+      ).toBe(true);
     });
   });
   describe('AND', () => {
@@ -1291,7 +1263,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(2);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
-      expect(result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12)).toBe(true);
+      expect(
+        result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12),
+      ).toBe(true);
     });
   });
   describe('OR/AND no-parenthesis', () => {
@@ -1309,7 +1283,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => (i.bool === true && i.number < 8) || i.string.match(/^string-1/))).toBe(true);
+      expect(
+        result.items.every((i) => (i.bool === true && i.number < 8) || i.string.match(/^string-1/)),
+      ).toBe(true);
     });
   });
   describe('OR/AND parenthesis', () => {
@@ -1332,7 +1308,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
-      expect(result.items.every((i) => i.bool === true && (i.number < 8 || i.string.match(/^string-1/)))).toBe(true);
+      expect(
+        result.items.every((i) => i.bool === true && (i.number < 8 || i.string.match(/^string-1/))),
+      ).toBe(true);
     });
   });
   describe('NOT', () => {
@@ -1365,7 +1343,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => !(i.bool === false || (i.string && i.string.match(/^string-1/))))).toBe(true);
+      expect(
+        result.items.every((i) => !(i.bool === false || (i.string && i.string.match(/^string-1/)))),
+      ).toBe(true);
     });
   });
 });
@@ -1382,12 +1362,12 @@ describe.skip('The scan method [projection]', () => {
     'stringset',
     'list',
     'stringmap',
-    'optional_number',
-    'optional_bool',
-    'optional_string',
-    'optional_stringset',
-    'optional_list',
-    'optional_stringmap',
+    'optionalNumber',
+    'optionalBool',
+    'optionalString',
+    'optionalStringset',
+    'optionalList',
+    'optionalStringmap',
   ];
   beforeAll(async () => {
     await clearTables();
@@ -1403,19 +1383,23 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.string !== undefined &&
-          attributes.filter((att) => att !== 'string').every((att) => (i as any)[att] === undefined),
+          attributes
+            .filter((att) => att !== 'string')
+            .every((att) => (i as any)[att] === undefined),
       ),
     ).toBe(true);
   });
   test('should project on sclar type [number]', async () => {
     const result = await model
       .scan()
-      .projection(['optional_number'])
+      .projection(['optionalNumber'])
       .exec();
     expect(result.count).toBe(17);
     expect(
       result.items.every((i) =>
-        attributes.filter((att) => att !== 'optional_number').every((att) => (i as any)[att] === undefined),
+        attributes
+          .filter((att) => att !== 'optionalNumber')
+          .every((att) => (i as any)[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1457,7 +1441,9 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.list !== undefined &&
-          attributes.filter((att) => att !== 'list').every((att) => (i as any)[att] === undefined) &&
+          attributes
+            .filter((att) => att !== 'list')
+            .every((att) => (i as any)[att] === undefined) &&
           (!i.list || i.list.length === 1),
       ),
     ).toBe(true);
@@ -1472,7 +1458,9 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.stringset !== undefined &&
-          attributes.filter((att) => att !== 'stringset').every((att) => (i as any)[att] === undefined),
+          attributes
+            .filter((att) => att !== 'stringset')
+            .every((att) => (i as any)[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1486,7 +1474,9 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.stringset !== undefined &&
-          attributes.filter((att) => att !== 'stringset').every((att) => (i as any)[att] === undefined) &&
+          attributes
+            .filter((att) => att !== 'stringset')
+            .every((att) => (i as any)[att] === undefined) &&
           (!i.stringset || i.stringset.length < 2),
       ),
     ).toBe(true);
@@ -1501,7 +1491,9 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.stringmap !== undefined &&
-          attributes.filter((att) => att !== 'stringmap').every((att) => (i as any)[att] === undefined),
+          attributes
+            .filter((att) => att !== 'stringmap')
+            .every((att) => (i as any)[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1515,7 +1507,9 @@ describe.skip('The scan method [projection]', () => {
       result.items.every(
         (i) =>
           i.stringmap !== undefined &&
-          attributes.filter((att) => att !== 'stringmap').every((att) => (i as any)[att] === undefined) &&
+          attributes
+            .filter((att) => att !== 'stringmap')
+            .every((att) => (i as any)[att] === undefined) &&
           !Object.keys(i.stringmap).some((k) => k !== 'key-2'),
       ),
     ).toBe(true);

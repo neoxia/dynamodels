@@ -1,35 +1,32 @@
+/* eslint-disable import/no-unresolved,no-unused-vars */
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { IKeyConditions, buildKeyConditions } from './build-keys';
-import { Operation, IPaginatedResult } from './operation';
-import { KeyCondition } from './key-conditions';
-import { IBuiltConditions } from './conditions';
 
-export class Query<T> extends Operation<T> {
+import { IKeyConditions, buildKeyConditions } from './build-keys';
+import { IBuiltConditions } from './conditions';
+import { KeyCondition } from './key-conditions';
+import Operation, { IPaginatedResult } from './operation';
+/* eslint-enable import/no-unresolved,no-unused-vars */
+
+const isFuild = (keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition =>
+  keyConditions instanceof KeyCondition;
+
+export default class Query<T> extends Operation<T> {
   protected params: DocumentClient.QueryInput;
 
-  constructor(documentClient: DocumentClient, params: DocumentClient.QueryInput) {
-    super(documentClient, params);
-  }
-
   /**
    * Apply key condition to the query.
    * Only "equal" operator can be used for hashkey
-   * If table has a composite key, other condition on range key can also be applied.
-   * @param keyConditions : Key condition as an object of field => target value or field => { target_value, operator }
-   */
-  //public keys(keyConditions: IKeyConditions): Query<T>;
-  /**
-   * Apply key condition to the query.
-   * Only "equal" operator can be used for hashkey
-   * If table has a composite key, other condition on range key can also be applied using and() helper method.
+   * If table has a composite key, other condition on range key can also be applied using and()
+   *  helper method.
    * (e.g. query().keys(key('hashkey').eq('foo').and(key('rangekey').beginsWith('bar'))))
-   * @param keyConditions : Key condition obtained by chaining key(), and() and key oeprators method helpers
+   * @param keyConditions : Key condition as an object of field => target value or
+   * field => { target_value, operator } OR Key condition obtained by chaining key(),
+   * and() and key oeprators method helpers
    * eq(), le(), lt(), ge(), gt() and beginsWith()
    */
-  //public keys(keyConditions: KeyCondition): Query<T>;
   public keys(keyConditions: IKeyConditions | KeyCondition): Query<T> {
     let builtConditions: IBuiltConditions;
-    if (this.isFuild(keyConditions)) {
+    if (isFuild(keyConditions)) {
       builtConditions = keyConditions.build();
     } else {
       builtConditions = buildKeyConditions(keyConditions);
@@ -38,10 +35,6 @@ export class Query<T> extends Operation<T> {
     this.addExpressionAttributesName(builtConditions.attributes);
     this.addExpressionAttributesValue(builtConditions.values);
     return this;
-  }
-
-  private isFuild(keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition {
-    return keyConditions instanceof KeyCondition;
   }
 
   /**
@@ -59,7 +52,7 @@ export class Query<T> extends Operation<T> {
    * @param direction 'asc' or 'desc'
    */
   public sort(direction: 'asc' | 'desc'): Query<T> {
-    this.params.ScanIndexForward = direction === 'desc' ? false : true;
+    this.params.ScanIndexForward = direction === 'desc';
     return this;
   }
 
