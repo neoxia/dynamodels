@@ -1,7 +1,7 @@
 # Dynamodels
 
-[![Build Status](https://travis-ci.org/MarioArnt/dynamodels.svg?branch=master)](https://travis-ci.org/MarioArnt/dynamodels)
-[![codecov](https://codecov.io/gh/MarioArnt/dynamodels/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodels)
+[![Build Status](https://travis-ci.org/MarioArnt/dynamodel.svg?branch=master)](https://travis-ci.org/MarioArnt/dynamodel)
+[![codecov](https://codecov.io/gh/MarioArnt/dynamodel/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodel)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 ![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodels/master/logo.svg?sanitize=true)
