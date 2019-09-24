@@ -16,7 +16,7 @@
     "semantic-release": "semantic-release"
   },
   "dependencies": {
-    "@hapi/joi": "^15.1.1",
+    "@hapi/joi": "^16.1.4",
     "aws-sdk": "^2.520.0",
     "uuid": "^3.3.3"
   },
