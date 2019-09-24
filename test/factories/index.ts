@@ -31,8 +31,9 @@ const save = async (model: Model<any>, hk: number, i: number, numericalKeys?: bo
     ...generatePartial(i, numericalKeys),
   };
   try {
-    model.save(entity);
+    return model.save(entity);
   } catch (e) {
+    console.error(e);
     throw Error(`Could not save entity ${JSON.stringify(entity)}. Reason ${e.message}`);
   }
 };

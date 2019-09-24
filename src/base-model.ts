@@ -11,10 +11,16 @@ import ValidationError from './validation-error';
 
 export type Key = string | number | Buffer;
 
+/* eslint-disable camelcase */
+
 const isKey = (key: Key | Object): key is Key =>
   typeof key !== 'object' || key.constructor === Buffer;
 
-/* eslint-disable camelcase */
+const isComposite = (
+  hashkeys_compositekeys: Key[] | Array<{ pk: any; sk?: any }>,
+): hashkeys_compositekeys is Array<{ pk: any; sk?: any }> =>
+  (hashkeys_compositekeys[0] as any).pk !== undefined;
+
 export default abstract class Model<T> {
   protected tableName: string;
 
@@ -320,16 +326,27 @@ export default abstract class Model<T> {
    * @returns the batch get operation result
    */
   private async getSingleBatch(
-    keys: Array<{ pk: any; sk?: any }>,
+    keys: Key[] | Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
-    const params: DocumentClient.BatchGetItemInput = {
-      RequestItems: {
-        [this.tableName]: {
-          Keys: keys.map((k) => this.buildKeys(k.pk, k.sk)),
+    let params: DocumentClient.BatchGetItemInput;
+    if (isComposite(keys)) {
+      params = {
+        RequestItems: {
+          [this.tableName]: {
+            Keys: keys.map((k) => this.buildKeys(k.pk, k.sk)),
+          },
         },
-      },
-    };
+      };
+    } else {
+      params = {
+        RequestItems: {
+          [this.tableName]: {
+            Keys: keys.map((pk) => ({ [this.pk]: pk })),
+          },
+        },
+      };
+    }
     if (options) {
       Object.assign(params, options);
     }
@@ -346,11 +363,26 @@ export default abstract class Model<T> {
    * @returns all the matching items
    */
   public async batchGet(
-    keys: Array<{ pk: any; sk?: any }>,
+    keys: Key[] | Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
+    if (isComposite(keys)) {
+      // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
+      const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
+        const chunk = Math.floor(idx / 100);
+        const currentBatches = all;
+        currentBatches[chunk] = [].concat(all[chunk] || [], one);
+        return currentBatches;
+      }, []);
+      // Perform the batchGet operation for each batch
+      const responsesBatches: T[][] = await Promise.all(
+        batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
+      );
+      // Flatten batches of responses in array of users' data
+      return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
+    }
     // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-    const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
+    const batches: Key[][] = keys.reduce((all, one, idx) => {
       const chunk = Math.floor(idx / 100);
       const currentBatches = all;
       currentBatches[chunk] = [].concat(all[chunk] || [], one);
@@ -358,7 +390,7 @@ export default abstract class Model<T> {
     }, []);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
-      batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
+      batches.map((batch: Key[]) => this.getSingleBatch(batch, options)),
     );
     // Flatten batches of responses in array of users' data
     return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);

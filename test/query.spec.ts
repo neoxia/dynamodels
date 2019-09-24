@@ -27,8 +27,6 @@ import generateData from './factories';
 
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
-const timeout = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 describe('The query method', () => {
   test.todo('should return all items in the table in 1MB limit when exec called');
   test.todo('should return all items in the table beyond 1MB limit when execAll called');
@@ -43,11 +41,12 @@ describe('The query method [index]', () => {
     await clearTables();
     await generateData(model, nbEntries);
     await generateData(num, nbEntries, true);
-    await timeout(500);
   });
   test('should use the provided index in query() [string keys]', async () => {
     const result = await model
-      .query('GS1')
+      .query('GS1', {
+        ConsistentRead: true,
+      })
       .keys({
         rangekey: 'rangekey-18',
       })
@@ -60,6 +59,7 @@ describe('The query method [index]', () => {
   test('should use the provided index in query() [number keys]', async () => {
     const result = await num
       .query('GS1')
+      // .consistent()
       .keys({
         rangekey: 33,
       })
@@ -135,7 +135,6 @@ describe('The query method [key conditions / object synthax]', () => {
     await clearTables();
     await generateData(model, nbEntries);
     await generateData(num, nbEntries, true);
-    await timeout(500);
   });
   describe('Hash key', () => {
     describe('EQ', () => {
@@ -371,7 +370,6 @@ describe('The query method [key conditions / fluid synthax]', () => {
     await clearTables();
     await generateData(model, nbEntries);
     await generateData(num, nbEntries, true);
-    await timeout(500);
   });
   describe('Hash key', () => {
     describe('EQ', () => {
@@ -614,7 +612,6 @@ describe('The query method [pagination]', () => {
   beforeAll(async () => {
     await clearTables();
     await generateData(model, nbEntries);
-    await timeout(500);
   });
   let nextPage: IPaginationOptions;
   test('should return the first page of items with the correct size', async () => {
@@ -664,7 +661,6 @@ describe('The query method [filtering / object synthax]', () => {
   beforeAll(async () => {
     await clearTables();
     await generateData(model, nbEntries);
-    await timeout(500);
   });
   describe('EQ', () => {
     test('should return items where EQ condition is true [string]', async () => {
@@ -1340,7 +1336,6 @@ describe('The query method [filtering / fluid synthax]', () => {
   beforeAll(async () => {
     await clearTables();
     await generateData(model, nbEntries);
-    await timeout(500);
   });
   describe('EQ', () => {
     test('should return items where EQ condition is true [string]', async () => {
@@ -2032,7 +2027,6 @@ describe('The query method [sorting]', () => {
     await clearTables();
     await generateData(model, nbEntries);
     await generateData(num, nbEntries, true);
-    await timeout(500);
   });
   test('should return all items sorted in ascending order if nothing is specified [string keys]', async () => {
     const result = await model

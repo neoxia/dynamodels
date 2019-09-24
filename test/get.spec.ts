@@ -23,7 +23,11 @@ describe('The get method', () => {
     await model.save(item);
   });
   test('should return the item with the same hash key', async () => {
-    expect(await model.get('foobar')).toEqual(item);
+    expect(
+      await model.get('foobar', {
+        ConsistentRead: true,
+      }),
+    ).toEqual(item);
   });
   test('should return null if no item is found with this hash key', async () => {
     expect(await model.get('notfound')).toBeNull();

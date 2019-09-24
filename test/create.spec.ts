@@ -21,7 +21,9 @@ describe('The create method', () => {
       list: ['foo', 42],
     };
     const foo = new HashKeyModel(item);
-    await foo.create();
+    await foo.create({
+      ReturnConsumedCapacity: 'NONE',
+    });
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
   });

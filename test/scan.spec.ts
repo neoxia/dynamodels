@@ -1104,7 +1104,9 @@ describe('The scan method [filtering / fluid synthax]', () => {
     });
     test('should return items where NOT_NULL condition is true [list]', async () => {
       const result = await model
-        .scan()
+        .scan({
+          ConsistentRead: true,
+        })
         .filter(attr('list').notNull())
         .exec();
       expect(result.count).toBe(10);
@@ -1212,6 +1214,7 @@ describe('The scan method [filtering / fluid synthax]', () => {
       const result = await model
         .scan()
         .filter(attr('string').notContains('ing-1'))
+        .consistent()
         .exec();
       expect(result.count).toBe(15);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -1259,6 +1262,7 @@ describe('The scan method [filtering / fluid synthax]', () => {
             .and(attr('number').ge(12))
             .and(attr('string').beginsWith('string-1')),
         )
+        .consistent()
         .exec();
       expect(result.count).toBe(2);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -1272,6 +1276,7 @@ describe('The scan method [filtering / fluid synthax]', () => {
     test('should return items where BEGINS_WITH condition is true [string]', async () => {
       const result = await model
         .scan()
+        .consistent()
         .filter(
           // bool = true AND number < 8 OR begins_with(string, string-1)
           attr('bool')
@@ -1350,7 +1355,7 @@ describe('The scan method [filtering / fluid synthax]', () => {
   });
 });
 
-describe.skip('The scan method [projection]', () => {
+describe('The scan method [projection]', () => {
   const model = new CompositeKeyModel();
   const nbEntries = 17;
   const attributes = [

@@ -3,7 +3,7 @@ import Model from '../../src/base-model';
 import documentClient, { CommonFields } from './common';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
-type CompositeKeyEntity = CommonFields & {
+export type CompositeKeyEntity = CommonFields & {
   hashkey: string;
   rangekey: string;
 };

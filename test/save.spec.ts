@@ -84,7 +84,9 @@ describe('The save method [1st overload]', () => {
       bool: true,
       list: ['foo', 42],
     };
-    await foo.save(item);
+    await foo.save(item, {
+      ReturnConsumedCapacity: 'NONE',
+    });
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
   });
