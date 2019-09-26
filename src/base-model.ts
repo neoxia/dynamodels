@@ -399,18 +399,21 @@ export default abstract class Model<T> {
   public async update(
     pk: Key,
     actions: IUpdateActions,
+    options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
 
   public async update(
     pk: Key,
     sk: Key,
     actions: IUpdateActions,
+    options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
 
   public async update(
     pk: Key,
     sk_actions: Key | IUpdateActions,
     actions?: IUpdateActions,
+    options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> {
     // Handle overloading
     const sk: Key = isKey(sk_actions) ? sk_actions : null;
@@ -422,7 +425,9 @@ export default abstract class Model<T> {
       Key: this.buildKeys(pk, sk),
       AttributeUpdates: buildUpdateActions(updateActions),
     };
-
+    if (options) {
+      Object.assign(params, options);
+    }
     return this.documentClient.update(params).promise();
   }
 
