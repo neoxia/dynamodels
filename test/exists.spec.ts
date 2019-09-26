@@ -23,7 +23,7 @@ describe('The exists method', () => {
     await model.save(item);
   });
   test('should return true if the item with the same hash key exists', async () => {
-    expect(await model.exists('foobar')).toBe(true);
+    expect(await model.exists('foobar', { ConsistentRead: true })).toBe(true);
   });
   test('should return false if no item with the same hash key exists', async () => {
     expect(await model.exists('unknown')).toBe(false);

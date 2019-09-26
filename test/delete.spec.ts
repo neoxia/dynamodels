@@ -24,7 +24,9 @@ describe('The delete method', () => {
   });
   test('should delete the item with the same hash key', async () => {
     expect(await model.exists('foobar')).toBe(true);
-    await model.delete('foobar');
+    await model.delete('foobar', {
+      ReturnValues: 'NONE',
+    });
     expect(await model.exists('foobar')).toBe(false);
   });
   test('should throw an error if no item is found with this hash key', async () => {
