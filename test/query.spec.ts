@@ -44,9 +44,7 @@ describe('The query method [index]', () => {
   });
   test('should use the provided index in query() [string keys]', async () => {
     const result = await model
-      .query('GS1', {
-        ConsistentRead: true,
-      })
+      .query('GS1')
       .keys({
         rangekey: 'rangekey-18',
       })
@@ -59,7 +57,6 @@ describe('The query method [index]', () => {
   test('should use the provided index in query() [number keys]', async () => {
     const result = await num
       .query('GS1')
-      // .consistent()
       .keys({
         rangekey: 33,
       })
@@ -386,7 +383,9 @@ describe('The query method [key conditions / fluid synthax]', () => {
       });
       test('should return items where EQ condition is true [number]', async () => {
         const result = await num
-          .query()
+          .query({
+            ConsistentRead: true,
+          })
           .keys(key('hashkey').eq(2))
           .exec();
         expect(result.count).toBe(20);
@@ -402,6 +401,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where EQ condition is true [string]', async () => {
         const result = await model
           .query()
+          // .consistent()
           .keys(
             key('hashkey')
               .eq('hashkey-1')

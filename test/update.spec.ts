@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import HashKeyModel from './models/hashkey';
 import { clearTables } from './hooks/create-tables';
-import { put, remove, add } from '../src/update-operators';
+import { put, remove } from '../src/update-operators';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 /* eslint-env node, jest */
@@ -28,7 +28,7 @@ describe('The update method', () => {
       number: put(43),
       bool: put(null),
       optionalNumber: remove(),
-      optionalString: add('string'),
+      // foo: add('string'),
     });
     const updated = await model.get('hashkey');
     expect(updated).toEqual({
@@ -39,7 +39,7 @@ describe('The update method', () => {
       stringset: ['string', 'string'],
       list: [42, 'foo'],
       stringmap: { bar: 'baz' },
-      optionalString: 'string',
+      // foo: 'string',
       optionalStringset: ['string', 'string'],
       optionalList: [42, 'foo'],
       optionalStringmap: { bar: 'baz' },
