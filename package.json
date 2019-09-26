@@ -6,9 +6,6 @@
   "author": "Mario Arnautou",
   "license": "MIT",
   "repository": "https://github.com/MarioArnt/dynamodels",
-  "publishConfig": {
-    "tag": "beta"
-  },
   "scripts": {
     "prettier": "npx prettier --write '{src,test}/**/*.{js,jsx,ts,tsx,json,yml}'",
     "lint": "npx eslint '{src,test}**/*'",
