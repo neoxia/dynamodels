@@ -87,7 +87,14 @@ const classic = new Album({
 await album.save();
 
 // Will throw, as item already exists
-await album.create();
+try {
+  await album.create();
+} catch (e) {
+  if (e.name === 'EALREADYEXISTS') {
+    // Do something
+  }
+  // Do something else
+}
 ```
 
 You can also directly pass in argument the item to save.
