@@ -412,21 +412,32 @@ export default abstract class Model<T> {
   public async update(
     pk: Key,
     sk_actions: Key | IUpdateActions,
-    actions?: IUpdateActions,
+    actions_options?: IUpdateActions | Partial<DocumentClient.UpdateItemInput>,
     options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> {
     // Handle overloading
-    const sk: Key = isKey(sk_actions) ? sk_actions : null;
-    const updateActions: IUpdateActions = isKey(sk_actions) ? actions : sk_actions;
-    // Build updateItem params
+    let sk: Key;
+    let updateActions: IUpdateActions;
+    let nativeOptions: Partial<DocumentClient.UpdateItemInput>;
+    if (!isKey(sk_actions)) {
+      // 1st overload
+      sk = null;
+      updateActions = sk_actions;
+      nativeOptions = actions_options;
+    } else {
+      // 2nd iverload
+      sk = sk_actions;
+      updateActions = actions_options as IUpdateActions;
+      nativeOptions = options;
+    }
     this.testKeys(pk, sk);
     const params: DocumentClient.UpdateItemInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
       AttributeUpdates: buildUpdateActions(updateActions),
     };
-    if (options) {
-      Object.assign(params, options);
+    if (nativeOptions) {
+      Object.assign(params, nativeOptions);
     }
     return this.documentClient.update(params).promise();
   }
