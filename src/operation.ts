@@ -37,7 +37,7 @@ export default abstract class Operation<T> {
    * helper to perform something than an equal.
    * @returns The filtered query/scan
    */
-  public filter(filterConditions: IFilterConditions): Operation<T>;
+  public abstract filter(filterConditions: IFilterConditions): Operation<T>;
 
   /**
    * Apply filters to the scan/query operation
@@ -45,9 +45,11 @@ export default abstract class Operation<T> {
    * or(), and(), not() and operator helpers calls.
    * @returns The filtered query/scan
    */
-  public filter(filterConditions: FilterCondition): Operation<T>;
+  public abstract filter(filterConditions: FilterCondition): Operation<T>;
 
-  public filter(filterConditions: IFilterConditions | FilterCondition): Operation<T> {
+  public abstract filter(filterConditions: IFilterConditions | FilterCondition): Operation<T>;
+
+  protected doFilter(filterConditions: IFilterConditions | FilterCondition): void {
     let builtConditions: IBuiltConditions;
     if (filterConditions instanceof FilterCondition) {
       builtConditions = filterConditions.build();
@@ -57,7 +59,6 @@ export default abstract class Operation<T> {
     this.params.FilterExpression = builtConditions.expression;
     this.addExpressionAttributesName(builtConditions.attributes);
     this.addExpressionAttributesValue(builtConditions.values);
-    return this;
   }
 
   /**
@@ -66,9 +67,10 @@ export default abstract class Operation<T> {
    * be read-consistent. true if ommited.
    * The modified query/scan operation
    */
-  public consistent(isConsistent?: boolean): Operation<T> {
+  public abstract consistent(isConsistent?: boolean): Operation<T>;
+
+  protected doConsistent(isConsistent?: boolean): void {
     this.params.ConsistentRead = isConsistent == null ? true : isConsistent;
-    return this;
   }
 
   /**
@@ -76,15 +78,20 @@ export default abstract class Operation<T> {
    * @param options The size of the page and the exclusive start key
    * @returns The paginate query
    */
-  public paginate(options: IPaginationOptions): Operation<T> {
+  public abstract paginate(options: IPaginationOptions): Operation<T>;
+
+  protected doPaginate(options: IPaginationOptions): void {
     this.page = options;
     Object.assign(this.params, paginate(options));
-    return this;
   }
 
-  public projection(
+  public abstract projection(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
-  ): Operation<T> {
+  ): Operation<T>;
+
+  protected doProject(
+    fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
+  ): void {
     const attributes: DocumentClient.ExpressionAttributeNameMap = {};
     const expression = fields.map((f) => {
       if (typeof f === 'string') {
@@ -105,7 +112,6 @@ export default abstract class Operation<T> {
     });
     this.params.ProjectionExpression = expression.join(', ');
     this.addExpressionAttributesName(attributes);
-    return this;
   }
 
   protected buildResponse(
@@ -160,7 +166,7 @@ export default abstract class Operation<T> {
     return items as T[];
   }
 
-  public getParams(): DocumentClient.ScanInput {
+  public getParams(): DocumentClient.ScanInput | DocumentClient.QueryInput {
     return this.params;
   }
 }

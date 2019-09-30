@@ -1,10 +1,12 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
-import { IKeyConditions, buildKeyConditions } from './build-keys';
+import { IKeyConditions, buildKeyConditions, IFilterConditions } from './build-keys';
 import { IBuiltConditions } from './conditions';
 import { KeyCondition } from './key-conditions';
 import Operation, { IPaginatedResult } from './operation';
+import { FilterCondition } from './filter-conditions';
+import { IPaginationOptions } from './paginate';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 const isFuild = (keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition =>
@@ -43,6 +45,28 @@ export default class Query<T> extends Operation<T> {
    */
   public index(name: string): Query<T> {
     this.params.IndexName = name;
+    return this;
+  }
+
+  public consistent(isConsistent?: boolean): Query<T> {
+    this.doConsistent(isConsistent);
+    return this;
+  }
+
+  public filter(filterConditions: IFilterConditions | FilterCondition): Query<T> {
+    this.doFilter(filterConditions);
+    return this;
+  }
+
+  public paginate(options: IPaginationOptions): Query<T> {
+    this.doPaginate(options);
+    return this;
+  }
+
+  public projection(
+    fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
+  ): Query<T> {
+    this.doProject(fields);
     return this;
   }
 
