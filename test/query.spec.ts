@@ -1328,6 +1328,16 @@ describe('The query method [filtering / object synthax]', () => {
       result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12),
     ).toBe(true);
   });
+  test('should not filter if empty object is passed', async () => {
+    const result = await model
+      .query()
+      .keys(key('hashkey').eq('hashkey-1'))
+      .filter({})
+      .exec();
+    expect(result.count).toBe(20);
+    expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+    expect(result.items.length).toBe(20);
+  });
 });
 
 describe('The query method [filtering / fluid synthax]', () => {

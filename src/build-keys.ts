@@ -109,7 +109,7 @@ const buildConditions = (keyConditions: IConditions): IBuiltConditions => {
     }
   });
   return {
-    expression: expressions.join(' AND '),
+    expression: expressions && expressions.length > 0 ? expressions.join(' AND ') : undefined,
     attributes,
     values,
   };
