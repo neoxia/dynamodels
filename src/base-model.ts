@@ -280,7 +280,7 @@ export default abstract class Model<T> {
     if (options) {
       Object.assign(params, options);
     }
-    return new Scan(this.documentClient, params);
+    return new Scan(this.documentClient, params, this.pk, this.sk);
   }
 
   /**
@@ -316,7 +316,7 @@ export default abstract class Model<T> {
     if (queryOptions) {
       Object.assign(params, queryOptions);
     }
-    return new Query(this.documentClient, params);
+    return new Query(this.documentClient, params, this.pk, this.sk);
   }
 
   /**

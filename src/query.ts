@@ -80,7 +80,7 @@ export default class Query<T> extends Operation<T> {
     return this;
   }
 
-  public async exec(): Promise<IPaginatedResult<T>> {
+  public async doExec(): Promise<IPaginatedResult<T>> {
     const result = await this.documentClient.query(this.params).promise();
     return this.buildResponse(result);
   }
