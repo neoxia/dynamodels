@@ -35,7 +35,7 @@ export default class Scan<T> extends Operation<T> {
    * Scan items in the limit of 1MB
    * @returns Fetched items, and pagination metadata
    */
-  public async exec(): Promise<IPaginatedResult<T>> {
+  public async doExec(): Promise<IPaginatedResult<T>> {
     const result = await this.documentClient.scan(this.params).promise();
     return this.buildResponse(result);
   }

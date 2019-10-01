@@ -24,6 +24,7 @@ import { key } from '../src/key-conditions';
 import { attr, not } from '../src/filter-conditions';
 import { IPaginationOptions } from '../src/paginate';
 import generateData from './factories';
+import PaginationMode from '../src/paginate-mode';
 
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
@@ -606,7 +607,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
 });
 
 /** Already tested in scan and paginate method have 100% coverage */
-describe('The query method [pagination]', () => {
+describe('The query method [pagination - native mode]', () => {
   const model = new CompositeKeyModel();
   const nbEntries = 394;
   beforeAll(async () => {
@@ -651,6 +652,80 @@ describe('The query method [pagination]', () => {
     // expect(page4.count).toBe(nbEntries);
     expect(page4.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(page4.items.length).toBe(0.5 * 394 - 3 * 50);
+    expect(page4.nextPage.size).toBe(50);
+  });
+});
+
+describe('The query method [pagination - constant page mode]', () => {
+  const model = new CompositeKeyModel();
+  const nbEntries = 800;
+  // NB Entries: 800
+  // NB Entries with hashkey = 1: 400
+  // NB Entries with hashkey = 1 && string not null: 200
+  // NB Pages: 4
+  beforeAll(async () => {
+    await clearTables();
+    await generateData(model, nbEntries);
+  });
+  let nextPage: IPaginationOptions;
+  test('should return the first page of items with the correct size', async () => {
+    const page1 = await model
+      .query()
+      .keys({ hashkey: 'hashkey-1' })
+      .filter({
+        string: notNull(),
+      })
+      .paginate({ mode: PaginationMode.CONSTANT_PAGE_SIZE, size: 50 })
+      .exec();
+    nextPage = page1.nextPage;
+    expect(page1.items.length).toBe(50);
+    /* expect(page1.items.map((i) => i.rangekey).sort()).toEqual(
+      Array(800).map((_el, i) => i).filter(i < 100).
+    ); */
+    expect(page1.nextPage.lastEvaluatedKey).toBeTruthy();
+    // expect(page1.nextPage.lastEvaluatedKey.rangekey).toBe('rangekey-100');
+    expect(page1.nextPage.size).toBe(50);
+  });
+  test('should return the next page of items with the correct size', async () => {
+    const page2 = await model
+      .query()
+      .keys({ hashkey: 'hashkey-1' })
+      .filter({
+        string: notNull(),
+      })
+      .paginate({ ...nextPage, mode: PaginationMode.CONSTANT_PAGE_SIZE })
+      .exec();
+    nextPage = page2.nextPage;
+    expect(page2.items.length).toBe(50);
+    expect(page2.nextPage.lastEvaluatedKey).toBeTruthy();
+    // expect(page2.nextPage.lastEvaluatedKey.rangekey).toBe('rangekey-200');
+    expect(page2.nextPage.size).toBe(50);
+  });
+  test('should return a null last evaluated key when last page is fetched', async () => {
+    const page3 = await model
+      .query()
+      .keys({ hashkey: 'hashkey-1' })
+      .filter({
+        string: notNull(),
+      })
+      .paginate({ ...nextPage, mode: PaginationMode.CONSTANT_PAGE_SIZE })
+      .exec();
+    expect(page3.items.length).toBe(50);
+    expect(page3.nextPage.lastEvaluatedKey).toBeTruthy();
+    // expect(page3.nextPage.lastEvaluatedKey.rangekey).toBe('rangekey-300');
+    expect(page3.nextPage.size).toBe(50);
+    nextPage = page3.nextPage;
+    const page4 = await model
+      .query()
+      .keys({ hashkey: 'hashkey-1' })
+      .filter({
+        string: notNull(),
+      })
+      .paginate({ ...nextPage, mode: PaginationMode.CONSTANT_PAGE_SIZE })
+      .exec();
+    // expect(page4.count).toBe(nbEntries);
+    expect(page4.nextPage.lastEvaluatedKey).toBeFalsy();
+    expect(page4.items.length).toBe(0.25 * nbEntries - 3 * 50);
     expect(page4.nextPage.size).toBe(50);
   });
 });

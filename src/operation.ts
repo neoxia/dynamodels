@@ -5,6 +5,7 @@ import { IFilterConditions, buildFilterConditions } from './build-keys';
 import { FilterCondition } from './filter-conditions';
 import paginate, { IPaginationOptions } from './paginate';
 import { IBuiltConditions } from './conditions';
+import PaginationMode from './paginate-mode';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 export interface IPaginatedResult<T> {
@@ -20,10 +21,18 @@ export default abstract class Operation<T> {
 
   protected page: IPaginationOptions;
 
+  private pk: string;
+
+  private sk: string;
+
   constructor(
     documentClient: DocumentClient,
     params: DocumentClient.QueryInput | DocumentClient.ScanInput,
+    pk: string,
+    sk?: string,
   ) {
+    this.pk = pk;
+    this.sk = sk;
     this.documentClient = documentClient;
     this.params = params;
   }
@@ -81,8 +90,13 @@ export default abstract class Operation<T> {
   public abstract paginate(options: IPaginationOptions): Operation<T>;
 
   protected doPaginate(options: IPaginationOptions): void {
-    this.page = options;
-    Object.assign(this.params, paginate(options));
+    this.page = options ? { ...options } : { size: 100 };
+    if (this.page.mode == null) {
+      this.page.mode = PaginationMode.NATIVE;
+    }
+    if (this.page.mode === PaginationMode.NATIVE) {
+      Object.assign(this.params, paginate(options));
+    }
   }
 
   public abstract projection(
@@ -145,7 +159,45 @@ export default abstract class Operation<T> {
     }
   }
 
-  public abstract async exec(): Promise<IPaginatedResult<T>>;
+  protected abstract async doExec(): Promise<IPaginatedResult<T>>;
+
+  public async exec(): Promise<IPaginatedResult<T>> {
+    if (!this.page || this.page.mode === PaginationMode.NATIVE) {
+      return this.doExec();
+    }
+    // Constant page size pagination mode
+    const items: T[] = [];
+    const size = this.page.size || 100;
+    this.params.Limit = size;
+    let count = 0;
+    let lastKey = this.page.lastEvaluatedKey;
+    do {
+      this.params.ExclusiveStartKey = lastKey;
+      // Necessary to have lastEvaluatedKey
+      /* eslint-disable-next-line no-await-in-loop */
+      const result = await this.doExec();
+      items.push(...result.items);
+      lastKey = result.nextPage.lastEvaluatedKey;
+      count += result.count;
+    } while (lastKey != null && items.length < size);
+    let lastEvaluatedKey = lastKey;
+    if (items.length > size && items[size - 1]) {
+      const lastEvaluatedItem = items[size - 1] as any;
+      lastEvaluatedKey = {};
+      lastEvaluatedKey[this.pk] = lastEvaluatedItem[this.pk];
+      if (this.sk) {
+        lastEvaluatedKey[this.sk] = lastEvaluatedItem[this.sk];
+      }
+    }
+    return {
+      count,
+      items: items.slice(0, size),
+      nextPage: {
+        lastEvaluatedKey,
+        size,
+      },
+    };
+  }
 
   /**
    * Fetch all results beyond the 1MB scan/query of single operation limits.
@@ -159,7 +211,7 @@ export default abstract class Operation<T> {
       this.params.ExclusiveStartKey = lastKey;
       // Necessary to have lastEvaluatedKey
       /* eslint-disable-next-line no-await-in-loop */
-      const result = await this.exec();
+      const result = await this.doExec();
       items.push(...result.items);
       lastKey = result.nextPage.lastEvaluatedKey;
     } while (lastKey != null);
