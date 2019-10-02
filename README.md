@@ -33,7 +33,7 @@ import Model from 'dynamodels';
 interface IAlbum {
   artist: string;
   album: string;
-  release_year?: number;
+  year?: number;
   genres?: string[];
 }
 
@@ -79,7 +79,7 @@ The save method will overwrite the existing item.
 const classic = new Album({
   artist: 'Pink Floyd',
   album: 'Dark Side of the Moon',
-  release_year: 1973,
+  year: 1973,
   genre: ['Rock', 'Psychadelic', 'Progressive'],
 });
 
@@ -105,7 +105,7 @@ const albums = new Album();
 await album.create({
   artist: 'Bob Marley & The Wailers',
   album: "Burnin'",
-  release_year: 1973,
+  year: 1973,
   genre: ['Reggea'],
 });
 ```
@@ -127,7 +127,7 @@ export class Album extends Model<IAlbum> {
   protected schema = Joi.object().keys({
     artist: Joi.string().required(),
     album: Joi.string().required(),
-    release_year: Joi.number().required(),
+    year: Joi.number().required(),
     genres: Joi.array(Joi.string()).optional(),
   });
 }
@@ -136,11 +136,11 @@ export class Album extends Model<IAlbum> {
 Model validation is automatically enforced when creating/saving entities:
 
 ```typescript
-// Will throw as release_year must be a number
+// Will throw as year must be a number
 await album.save({
   artist: 'Bob Marley & The Wailers',
   album: "Burnin'",
-  release_year: '1973',
+  year: '1973',
   genre: ['Reggea'],
 });
 ```
@@ -158,7 +158,7 @@ Table has a composite key:
 
 ```typescript
 const albums = new Album();
-const nvrmind = await album.get('Nirvana', 'Nevermind'); // {artist: 'Nirvana', album: 'Nevermind', release_year: 1991...}
+const nvrmind = await album.get('Nirvana', 'Nevermind'); // {artist: 'Nirvana', album: 'Nevermind', year: 1991...}
 ```
 
 _Note:_ For table with a composite key, range key is mandatory. This will throw an exception.
@@ -213,6 +213,30 @@ This will return the 50 first items and the last evaluated key. To fetch the nex
 const nextPage = await albums.scan().paginate(result.nextPage)exec();
 ```
 
+### Pagination mode
+
+Natively, dynamoDB performs filter operations after having retrieved a page of result.
+
+This leads to inconsistent pages size. Let's say you target a page size of 50. DynamoDB fetch the first page which length is 50. After applying filters on this first page you ends up with 13 results, and maybe 32 on the seconds, 7 on the third and so on.
+
+If you want to force page size to be same despite filtering, you can use `PaginationMode.CONSTANT_PAGE_SIZE` option.
+
+```typescript
+const albums = new Album();
+const result = await albums
+  .scan()
+  .filter({
+    year: 1969, // Summer of love
+  })
+  .paginate({
+    mode: PaginationMode.CONSTANT_PAGE_SIZE,
+    size: 50,
+  })
+  .exec();
+```
+
+Under the hood, dynamodels will fetch as many pages as it is necessary to fill the 50 results matching filters.
+
 ### Filtering scan operations
 
 A filtering helper method is also available.
@@ -224,7 +248,7 @@ const albums = new Album();
 const result = await albums
   .scan()
   .filter({
-    release_year: ge(1973),
+    year: ge(1973),
   })
   .exec();
 ```
@@ -234,13 +258,15 @@ The `filter` accept an object where keys are the fields on which you to filter a
 1. just the target value of the field, in this case the equal `EQ` operator is used
 2. a call to a filter operator helper method.
 
+_Note_: if you want to filter on a field which is also a [Amazon reserved keyword](https://docs.aws.amazon.com/fr_fr/amazondynamodb/latest/developerguide/ReservedWords.html), dynamodels with automatically escape it :sparkles:
+
 ### Filter operators
 
 Available filter operators are:
 
 1. Equal: `eq(value: string | number | Buffer)`
 2. Not Equal: `neq(value: string | number | Buffer)`
-3. In: `_in(values: Array<string | number | Buffer>)`
+3. In: `isIn(values: Array<string | number | Buffer>)`
 4. Lesser than: `lt(value: string | number | Buffer)`
 5. Lesser or equal than: `le(value: string | number | Buffer)`
 6. Greater than: `gt(value: string | number | Buffer)`
@@ -249,7 +275,7 @@ Available filter operators are:
 9. Contains substring `contains(value: string)`
 10. Do not contains substring: `notContains(value: string)`
 11. Begin with: `contains(value: string)`
-12. Is null: `_null()`
+12. Is null: `isNull()`
 13. Is not null: `notNull()`
 
 For string, utf-8 alphabetical order is used.
@@ -260,6 +286,18 @@ Check official DynamoDB documentation for more details.
 
 ### Filter Condition Builder
 
+For complex conditions, i.e. conditions with compositions of AND/OR or NOT clauses, dynamodels provides a fluid synthax to easily write them.
+
+```typescript
+const albums = new Album();
+const result = await albums
+  .scan()
+  .filter(attr('year').lt(1970)
+    .or(attr('year').ge(1980))
+    .and(not(attr('artist').beginsWith('Bob')))
+  .exec();
+```
+
 ## Query items
 
 The library also provides helpers to build dynamoDB queries.
@@ -268,7 +306,7 @@ The synthax is simmilar to `scan` operations.
 
 ### Key conditions
 
-Key conditions can be added with the `keys`helpers method.
+Key conditions can be added with the `keys` helpers method.
 
 For instance to retrieve all the album for a given artist.
 
@@ -288,7 +326,36 @@ In this case both condition are applied: it is a `AND` not a `OR`.
 
 ### Key condition operators
 
+Available key conditions operators are:
+
+1. Equal: `eq(value: string | number | Buffer)`
+2. Lesser than: `lt(value: string | number | Buffer)`
+3. Lesser or equal than: `le(value: string | number | Buffer)`
+4. Greater than: `gt(value: string | number | Buffer)`
+5. Greater or equal than: `le(value: string | number | Buffer)`
+6. Between boundaries: `between(lower: string | number | Buffer, upper: string | number | Buffer)`
+7. Begin with: `contains(value: string)`
+
 ### Key condition builder
+
+You can use, if you prefer, the same fluid sythax than for filter conditions.
+
+```typescript
+const albums = new Album();
+const result = await albums
+  .query()
+  .keys(attr('artist').eq('Bob Dylan'))
+  .exec();
+```
+
+Just be aware that:
+
+1. Key condition on hash key is mandatory.
+2. Only `eq()` operator can be used on hash key.
+3. You can only use `and` between hash key condition and optional range key condition.
+4. Only the operators listed above can be used on range key condition.
+
+Otherwise dynamoDB will throw a ValidationException. Dynamodels will not check these prerequisites for you.
 
 ### Using indexes
 
@@ -302,14 +369,26 @@ You can retrieve all the albums from Deep Purple release before 1976:
 const albums = new Album();
 const result = await albums
   .query('year_index')
-  .filter({
+  .keys({
     artist: 'Deep Purple',
-    release_year: lt(1976),
+    year: lt(1976),
   })
   .exec();
 ```
 
-_Note_: if you want to filter on a field which is also a [Amazon reserved keyword](https://docs.aws.amazon.com/fr_fr/amazondynamodb/latest/developerguide/ReservedWords.html), you will have to build the query yourself using native `DocumentClient.QueryInput` options.
+The following synthax using index method is equivalent:
+
+```typescript
+const albums = new Album();
+const result = await albums
+  .query()
+  .index('year_index')
+  .filter({
+    artist: 'Deep Purple',
+    year: lt(1976),
+  })
+  .exec();
+```
 
 ### Paginate
 
@@ -402,7 +481,7 @@ Table has a composite key:
 ```typescript
 const albums = new Album();
 await album.update('Jimi Hendrix', 'Are You Experienced', {
-  release_year: add(1967),
+  year: add(1967),
   genre: put(['Rock', 'Blues', 'Psychadelic']),
 });
 ```
