@@ -45,6 +45,10 @@ describe('The batch get method', () => {
 
     expect(result.length).toBe(nbEntries);
   });
+  test('should return empty array if keys are an empty array', async () => {
+    const result = await compositeModel.batchGet([]);
+    expect(result).toEqual([]);
+  });
   test('should return all items when composite keys are corect [case < 100]', async () => {
     const nbEntries = 42;
     await clearTables();

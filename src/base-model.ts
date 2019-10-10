@@ -366,6 +366,9 @@ export default abstract class Model<T> {
     keys: Key[] | Array<{ pk: any; sk?: any }>,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
+    if (keys.length === 0) {
+      return [];
+    }
     if (isComposite(keys)) {
       // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
       const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
