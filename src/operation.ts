@@ -218,6 +218,26 @@ export default abstract class Operation<T> {
     return items as T[];
   }
 
+  /**
+   * Count all result for the scan or query operation.
+   * Count is used, and not ScannedCount, so it is the count
+   * after the filters are applied.
+   * @returns the operation count
+   */
+  public async count(): Promise<number> {
+    let lastKey = null;
+    let count = 0;
+    do {
+      this.params.ExclusiveStartKey = lastKey;
+      // Necessary to have lastEvaluatedKey
+      /* eslint-disable-next-line no-await-in-loop */
+      const result = await this.doExec();
+      count += result.count;
+      lastKey = result.nextPage.lastEvaluatedKey;
+    } while (lastKey != null);
+    return count;
+  }
+
   public getParams(): DocumentClient.ScanInput | DocumentClient.QueryInput {
     return this.params;
   }

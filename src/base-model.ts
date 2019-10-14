@@ -288,6 +288,15 @@ export default abstract class Model<T> {
   }
 
   /**
+   * Count all item of the table
+   * Careful ! All the table will be scanned. This might be time-consuming.
+   * @returns the number of items in the table
+   */
+  public async count(): Promise<number> {
+    return this.scan().count();
+  }
+
+  /**
    * Peform a query operation.
    * @param options The query options expected by AWS document client.
    * @returns The items matching the keys conditions, in the limit of 1MB,
