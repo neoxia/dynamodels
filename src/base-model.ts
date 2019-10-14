@@ -45,6 +45,10 @@ export default abstract class Model<T> {
     this.item = item;
   }
 
+  public getItem(): T {
+    return this.item;
+  }
+
   /**
    * Create the item hold by the class. Prevent overwritting of an existing
    * item with the same key(s).
