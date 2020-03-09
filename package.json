@@ -1,6 +1,6 @@
 {
   "name": "dynamodels",
-  "version": "1.4.1",
+  "version": "1.4.0",
   "description": "Typescript Overlay to easily manage AWS DynamoDB entities",
   "main": "dist/src/index.js",
   "author": "Mario Arnautou",
