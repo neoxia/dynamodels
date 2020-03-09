@@ -227,6 +227,7 @@ export default abstract class Operation<T> {
   public async count(): Promise<number> {
     let lastKey = null;
     let count = 0;
+    this.params.Select = 'COUNT';
     do {
       this.params.ExclusiveStartKey = lastKey;
       // Necessary to have lastEvaluatedKey
@@ -235,6 +236,7 @@ export default abstract class Operation<T> {
       count += result.count;
       lastKey = result.nextPage.lastEvaluatedKey;
     } while (lastKey != null);
+    this.params.Select = null;
     return count;
   }
 
