@@ -21,6 +21,7 @@ describe('The create method', () => {
       list: ['foo', 42],
     };
     const foo = new HashKeyModel(item);
+    expect(foo.getItem()).toBe(item);
     await foo.create({
       ReturnConsumedCapacity: 'NONE',
     });
@@ -65,7 +66,8 @@ describe('The create method', () => {
     }
   });
   test('should throw an error if a Joi schema is specified and validation failed', async () => {
-    const foo = new HashKeyJoiModel({
+    const foo = new HashKeyJoiModel();
+    foo.setItem({
       hashkey: 'bar',
       string: 'whatever',
       stringmap: { foo: 'bar' },
