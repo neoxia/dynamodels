@@ -43,6 +43,32 @@ describe.skip('The scan method', () => {
   });
 });
 
+describe('The count method', () => {
+  const model = new CompositeKeyModel();
+  const nbEntries = 143;
+  beforeAll(async () => {
+    await clearTables();
+    await generateData(model, nbEntries);
+  });
+  test('should return the correct number of items', async () => {
+    const count = await model.count();
+    expect(count).toBe(143);
+  });
+});
+
+describe('The scan method [count]', () => {
+  const model = new CompositeKeyModel();
+  const nbEntries = 265;
+  beforeAll(async () => {
+    await clearTables();
+    await generateData(model, nbEntries);
+  });
+  test('should return the correct number of items', async () => {
+    const count = await model.scan().count();
+    expect(count).toBe(265);
+  });
+});
+
 describe('The scan method [pagination]', () => {
   const model = new CompositeKeyModel();
   const nbEntries = 187;

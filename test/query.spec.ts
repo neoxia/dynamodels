@@ -536,6 +536,17 @@ describe('The query method [key conditions / fluid synthax]', () => {
         expect(result.items.length).toBe(16);
         expect(result.items.every((i) => i.hashkey.localeCompare('rangekey-11') < 0)).toBe(true);
       });
+      test('should return items where GT condition is true [string + count]', async () => {
+        const count = await model
+          .query()
+          .keys(
+            key('hashkey')
+              .eq('hashkey-1')
+              .and(key('rangekey').gt('rangekey-11')),
+          )
+          .count();
+        expect(count).toBe(16);
+      });
       test('should return items where GT condition is true [number]', async () => {
         const result = await num
           .query()

@@ -45,6 +45,10 @@ export default abstract class Model<T> {
     this.item = item;
   }
 
+  public getItem(): T {
+    return this.item;
+  }
+
   /**
    * Create the item hold by the class. Prevent overwritting of an existing
    * item with the same key(s).
@@ -281,6 +285,15 @@ export default abstract class Model<T> {
       Object.assign(params, options);
     }
     return new Scan(this.documentClient, params, this.pk, this.sk);
+  }
+
+  /**
+   * Count all item of the table
+   * Careful ! All the table will be scanned. This might be time-consuming.
+   * @returns the number of items in the table
+   */
+  public async count(): Promise<number> {
+    return this.scan().count();
   }
 
   /**
