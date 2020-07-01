@@ -11,6 +11,6 @@
     "implicit-arrow-linebreak": "off",
     "operator-linebreak": "off",
     "function-paren-newline": "off",
-    "import/extensions": "off",
+    "import/extensions": "off"
   }
 }
