@@ -29,6 +29,11 @@ describe('The delete method', () => {
     });
     expect(await model.exists('foobar')).toBe(false);
   });
+  test('should delete the given item', async () => {
+    expect(await model.exists('foobar')).toBe(true);
+    await model.delete(item);
+    expect(await model.exists('foobar')).toBe(false);
+  });
   test('should throw an error if no item is found with this hash key', async () => {
     try {
       await model.delete('unknown');

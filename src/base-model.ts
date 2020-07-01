@@ -232,6 +232,10 @@ export default abstract class Model<T> {
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
 
+  public async delete(
+    item: T,
+    options?: Partial<DocumentClient.DeleteItemInput>,
+  ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
   /**
    * Delete a single item by key
    * @param pk : The hash key value
@@ -239,6 +243,7 @@ export default abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns  The item as it was before deletion and consumed capacity
    */
+
   public async delete(
     pk: Key,
     sk: Key,
@@ -246,11 +251,12 @@ export default abstract class Model<T> {
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
 
   public async delete(
-    pk: Key,
+    pk_item: Key | T,
     sk_options?: Key | Partial<DocumentClient.DeleteItemInput>,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
     // Handle method overloading
+    const pk = (pk_item as any)[this.pk] != null ? (pk_item as any)[this.pk] : pk_item;
     const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
     const deleteOptions: Partial<DocumentClient.GetItemInput> =
       sk_options != null && isKey(sk_options)
