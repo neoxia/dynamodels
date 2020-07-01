@@ -10,6 +10,7 @@
     "no-dupe-class-members": "off",
     "implicit-arrow-linebreak": "off",
     "operator-linebreak": "off",
-    "function-paren-newline": "off"
+    "function-paren-newline": "off",
+    "import/extensions": "off"
   }
 }

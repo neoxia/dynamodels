@@ -6,6 +6,8 @@ import generateData from './factories';
 import HashKeyModel, { HashKeyEntity } from './models/hashkey';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
+jest.setTimeout(20 * 1000);
+
 const timeout = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const data: { hashkey: HashKeyEntity[]; compositekey: CompositeKeyEntity[] } = {

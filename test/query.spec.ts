@@ -28,6 +28,8 @@ import PaginationMode from '../src/paginate-mode';
 
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
+jest.setTimeout(20 * 1000);
+
 describe('The query method', () => {
   test.todo('should return all items in the table in 1MB limit when exec called');
   test.todo('should return all items in the table beyond 1MB limit when execAll called');
