@@ -66,8 +66,8 @@ export default abstract class Operation<T> {
       builtConditions = buildFilterConditions(filterConditions);
     }
     this.params.FilterExpression = builtConditions.expression;
-    this.addExpressionAttributesName(builtConditions.attributes);
-    this.addExpressionAttributesValue(builtConditions.values);
+    this.addExpressionAttributes(builtConditions.attributes);
+    this.addExpressionAttributes(builtConditions.values);
   }
 
   /**
@@ -99,9 +99,12 @@ export default abstract class Operation<T> {
     }
   }
 
-  public abstract projection(
+  public projection(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
-  ): Operation<T>;
+  ): Operation<T> {
+    this.doProject(fields);
+    return this;
+  }
 
   protected doProject(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
@@ -125,7 +128,7 @@ export default abstract class Operation<T> {
       return '';
     });
     this.params.ProjectionExpression = expression.join(', ');
-    this.addExpressionAttributesName(attributes);
+    this.addExpressionAttributes(attributes);
   }
 
   protected buildResponse(
@@ -141,21 +144,16 @@ export default abstract class Operation<T> {
     };
   }
 
-  protected addExpressionAttributesName(attributes: DocumentClient.ExpressionAttributeNameMap) {
+  protected addExpressionAttributes(
+    attributes:
+      | DocumentClient.ExpressionAttributeNameMap
+      | DocumentClient.ExpressionAttributeValueMap,
+  ) {
     if (Object.keys(attributes).length > 0) {
       if (!this.params.ExpressionAttributeNames) {
         this.params.ExpressionAttributeNames = {};
       }
       Object.assign(this.params.ExpressionAttributeNames, attributes);
-    }
-  }
-
-  protected addExpressionAttributesValue(values: DocumentClient.ExpressionAttributeValueMap) {
-    if (Object.keys(values).length > 0) {
-      if (!this.params.ExpressionAttributeValues) {
-        this.params.ExpressionAttributeValues = {};
-      }
-      Object.assign(this.params.ExpressionAttributeValues, values);
     }
   }
 

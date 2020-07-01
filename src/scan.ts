@@ -24,13 +24,6 @@ export default class Scan<T> extends Operation<T> {
     return this;
   }
 
-  public projection(
-    fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
-  ): Scan<T> {
-    this.doProject(fields);
-    return this;
-  }
-
   /**
    * Scan items in the limit of 1MB
    * @returns Fetched items, and pagination metadata

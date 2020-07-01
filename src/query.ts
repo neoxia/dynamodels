@@ -34,8 +34,8 @@ export default class Query<T> extends Operation<T> {
       builtConditions = buildKeyConditions(keyConditions);
     }
     this.params.KeyConditionExpression = builtConditions.expression;
-    this.addExpressionAttributesName(builtConditions.attributes);
-    this.addExpressionAttributesValue(builtConditions.values);
+    this.addExpressionAttributes(builtConditions.attributes);
+    this.addExpressionAttributes(builtConditions.values);
     return this;
   }
 
@@ -60,13 +60,6 @@ export default class Query<T> extends Operation<T> {
 
   public paginate(options: IPaginationOptions): Query<T> {
     this.doPaginate(options);
-    return this;
-  }
-
-  public projection(
-    fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
-  ): Query<T> {
-    this.doProject(fields);
     return this;
   }
 
