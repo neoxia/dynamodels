@@ -39,33 +39,34 @@ export default abstract class ConditionAttribute<T> {
 
   public abstract beginsWith(value: T): Condition<T>;
 
-  protected prepareEq(value: T): IArgs<T> {
+  protected prepareOp(value: T): { id: string; attr: Map<string, string>; values: Map<string, T> } {
     const id = this.getAttributeUniqueIdentifier();
     const { attr, values } = this.fillMaps(id, value);
+    return { id, attr, values };
+  }
+
+  protected prepareEq(value: T): IArgs<T> {
+    const { id, attr, values } = this.prepareOp(value);
     return [`#${id} = :${id}`, attr, values];
   }
 
   protected prepareGt(value: T): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
+    const { id, attr, values } = this.prepareOp(value);
     return [`#${id} > :${id}`, attr, values];
   }
 
   protected prepareGe(value: T): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
+    const { id, attr, values } = this.prepareOp(value);
     return [`#${id} >= :${id}`, attr, values];
   }
 
   protected prepareLt(value: T): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
+    const { id, attr, values } = this.prepareOp(value);
     return [`#${id} < :${id}`, attr, values];
   }
 
   protected prepareLe(value: T): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
+    const { id, attr, values } = this.prepareOp(value);
     return [`#${id} <= :${id}`, attr, values];
   }
 

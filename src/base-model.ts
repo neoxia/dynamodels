@@ -388,14 +388,16 @@ export default abstract class Model<T> {
     if (keys.length === 0) {
       return [];
     }
-    if (isComposite(keys)) {
-      // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-      const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
+    const splitBatch = (_keys: any[]) =>
+      _keys.reduce((all, one, idx) => {
         const chunk = Math.floor(idx / 100);
         const currentBatches = all;
         currentBatches[chunk] = [].concat(all[chunk] || [], one);
         return currentBatches;
       }, []);
+    if (isComposite(keys)) {
+      // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
+      const batches = splitBatch(keys);
       // Perform the batchGet operation for each batch
       const responsesBatches: T[][] = await Promise.all(
         batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
@@ -404,12 +406,7 @@ export default abstract class Model<T> {
       return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
     }
     // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-    const batches: Key[][] = keys.reduce((all, one, idx) => {
-      const chunk = Math.floor(idx / 100);
-      const currentBatches = all;
-      currentBatches[chunk] = [].concat(all[chunk] || [], one);
-      return currentBatches;
-    }, []);
+    const batches = splitBatch(keys);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
       batches.map((batch: Key[]) => this.getSingleBatch(batch, options)),
