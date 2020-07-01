@@ -21,7 +21,7 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^8.2.0",
+    "@commitlint/cli": "^9.0.1",
     "@commitlint/config-conventional": "^8.2.0",
     "@types/hapi__joi": "^15.0.3",
     "@types/jest": "^24.0.18",
@@ -30,19 +30,18 @@
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
     "codecov": "^3.6.1",
-    "commitizen": "^4.0.3",
+    "commitizen": "^4.1.2",
     "cz-conventional-changelog": "^3.0.2",
     "eslint": "^6.4.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2",
     "husky": "^3.0.5",
-    "jest": "^24.9.0",
+    "jest": "^26.1.0",
     "kill-port": "^1.5.1",
     "prettier": "^1.18.2",
     "semantic-release": "^15.13.24",
     "serverless": "^1.51.0",
-    "serverless-dynamodb-local": "^0.2.38",
-    "ts-jest": "^24.0.2",
+    "ts-jest": "^26.1.1",
     "typescript": "^3.6.2"
   },
   "commitlint": {
