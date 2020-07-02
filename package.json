@@ -18,7 +18,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "aws-sdk": "^2.520.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^9.0.1",
