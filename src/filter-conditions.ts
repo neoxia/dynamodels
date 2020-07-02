@@ -29,9 +29,7 @@ export class FilterCondition extends Condition<FilterValue> {
   }
 
   public or(condition: FilterCondition): FilterCondition {
-    this.prepareExpression(condition);
-    this.expression = `${this.expression} OR (${condition.expression})`;
-    return this;
+    return this.combine(condition, 'OR') as FilterCondition;
   }
 
   public not(): FilterCondition {

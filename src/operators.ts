@@ -1,10 +1,10 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
-import { Key } from './base-model';
+import { KeyValue } from './base-model';
 import { IFilterConditionOperators, FilterValue } from './filter-conditions';
 import { IKeyConditionsOperators } from './key-conditions';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
-type ConditionValue = Key | FilterValue;
+type ConditionValue = KeyValue | FilterValue;
 
 export interface IFilterCondition {
   operator?: IFilterConditionOperators;
@@ -13,7 +13,7 @@ export interface IFilterCondition {
 
 export interface IKeyCondition {
   operator?: IKeyConditionsOperators;
-  values: Key[];
+  values: KeyValue[];
 }
 
 const op = (
@@ -27,11 +27,11 @@ const op = (
 export const eq = (value: FilterValue): any => op('EQ', [value]);
 export const neq = (value: FilterValue): IFilterCondition => op('NE', [value]);
 export const isIn = (...args: FilterValue[]): IFilterCondition => op('IN', args);
-export const le = (value: Key): any => op('LE', [value]);
-export const lt = (value: Key): any => op('LT', [value]);
-export const ge = (value: Key): any => op('GE', [value]);
-export const gt = (value: Key): any => op('GT', [value]);
-export const between = (lower: Key, upper: Key): any => op('BETWEEN', [lower, upper]);
+export const le = (value: KeyValue): any => op('LE', [value]);
+export const lt = (value: KeyValue): any => op('LT', [value]);
+export const ge = (value: KeyValue): any => op('GE', [value]);
+export const gt = (value: KeyValue): any => op('GT', [value]);
+export const between = (lower: KeyValue, upper: KeyValue): any => op('BETWEEN', [lower, upper]);
 export const isNull = (): IFilterCondition => op('NULL', []);
 export const notNull = (): IFilterCondition => op('NOT_NULL', []);
 export const exists = (): IFilterCondition => op('EXISTS', []);
