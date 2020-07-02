@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
-import { ObjectSchema, validate } from '@hapi/joi';
+import { ObjectSchema } from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
@@ -118,7 +118,7 @@ export default abstract class Model<T> {
       throw Error('No item to save');
     }
     if (this.schema) {
-      const { error } = validate(toSave, this.schema);
+      const { error } = this.schema.validate(toSave);
       if (error) {
         throw new ValidationError('Validation error', error);
       }
@@ -256,6 +256,9 @@ export default abstract class Model<T> {
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
     // Handle method overloading
+    if (!pk_item) {
+      throw Error('Missing HashKey');
+    }
     const pk = (pk_item as any)[this.pk] != null ? (pk_item as any)[this.pk] : pk_item;
     const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
     const deleteOptions: Partial<DocumentClient.GetItemInput> =
