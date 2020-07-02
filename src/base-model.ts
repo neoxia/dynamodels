@@ -9,17 +9,18 @@ import { IUpdateActions, buildUpdateActions } from './update-operators';
 import ValidationError from './validation-error';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
-export type Key = string | number | Buffer;
+export type KeyValue = string | number | Buffer;
+type SimpleKey = KeyValue;
+type CompositeKey = { pk: KeyValue; sk: KeyValue };
+type Keys = SimpleKey[] | CompositeKey[];
 
 /* eslint-disable camelcase */
 
-const isKey = (key: Key | Object): key is Key =>
+const isKey = (key: KeyValue | Object): key is KeyValue =>
   typeof key !== 'object' || key.constructor === Buffer;
 
-const isComposite = (
-  hashkeys_compositekeys: Key[] | Array<{ pk: any; sk?: any }>,
-): hashkeys_compositekeys is Array<{ pk: any; sk?: any }> =>
-  (hashkeys_compositekeys[0] as any).pk !== undefined;
+const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
+  (hashKeys_compositeKeys[0] as any).pk !== undefined;
 
 export default abstract class Model<T> {
   protected tableName: string;
@@ -143,7 +144,7 @@ export default abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns The matching item
    */
-  public async get(pk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
+  public async get(pk: KeyValue, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
 
   /**
    * Get a single item by hash key and range key
@@ -152,19 +153,20 @@ export default abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns The matching item
    */
-  public async get(pk: Key, sk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
+  public async get(
+    pk: KeyValue,
+    sk: KeyValue,
+    options?: Partial<DocumentClient.GetItemInput>,
+  ): Promise<T>;
 
   public async get(
     pk: any,
-    sk_options?: Partial<DocumentClient.GetItemInput> | Key,
+    sk_options?: Partial<DocumentClient.GetItemInput> | KeyValue,
     options?: Partial<DocumentClient.GetItemInput>,
   ): Promise<T> {
     // Handle method overloading
-    const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
-    const getOptions: Partial<DocumentClient.GetItemInput> =
-      sk_options != null && isKey(sk_options)
-        ? options
-        : (sk_options as Partial<DocumentClient.GetItemInput>);
+    const sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
+    const getOptions = Model.getOptions(sk_options, options);
     // Prepare getItem operation
     this.testKeys(pk, sk);
     const params: DocumentClient.GetItemInput = {
@@ -182,7 +184,7 @@ export default abstract class Model<T> {
     return null;
   }
 
-  private testKeys(pk: Key, sk?: Key) {
+  private testKeys(pk: KeyValue, sk?: KeyValue) {
     if (!pk) {
       throw Error(`Missing HashKey ${this.pk}=${pk}`);
     }
@@ -197,7 +199,10 @@ export default abstract class Model<T> {
    * @param options : Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
-  public async exists(pk: Key, options?: Partial<DocumentClient.GetItemInput>): Promise<boolean>;
+  public async exists(
+    pk: KeyValue,
+    options?: Partial<DocumentClient.GetItemInput>,
+  ): Promise<boolean>;
 
   /**
    * Check if an item exist by keys
@@ -207,13 +212,13 @@ export default abstract class Model<T> {
    * @returns true if item exists, false otherwise
    */
   public async exists(
-    pk: Key,
-    sk: Key,
+    pk: KeyValue,
+    sk: KeyValue,
     options?: Partial<DocumentClient.GetItemInput>,
   ): Promise<boolean>;
 
   public async exists(
-    pk: Key,
+    pk: KeyValue,
     sk_options?: any,
     options?: Partial<DocumentClient.GetItemInput>,
   ): Promise<boolean> {
@@ -228,7 +233,7 @@ export default abstract class Model<T> {
    * @returns  The item as it was before deletion and consumed capacity
    */
   public async delete(
-    pk: Key,
+    pk: KeyValue,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
 
@@ -245,14 +250,14 @@ export default abstract class Model<T> {
    */
 
   public async delete(
-    pk: Key,
-    sk: Key,
+    pk: KeyValue,
+    sk: KeyValue,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
 
   public async delete(
-    pk_item: Key | T,
-    sk_options?: Key | Partial<DocumentClient.DeleteItemInput>,
+    pk_item: KeyValue | T,
+    sk_options?: KeyValue | Partial<DocumentClient.DeleteItemInput>,
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
     // Handle method overloading
@@ -260,11 +265,8 @@ export default abstract class Model<T> {
       throw Error('Missing HashKey');
     }
     const pk = (pk_item as any)[this.pk] != null ? (pk_item as any)[this.pk] : pk_item;
-    const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
-    const deleteOptions: Partial<DocumentClient.GetItemInput> =
-      sk_options != null && isKey(sk_options)
-        ? options
-        : (sk_options as Partial<DocumentClient.DeleteItemInput>);
+    const sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
+    const deleteOptions = Model.getOptions(sk_options, options);
     // Build delete item params
     this.testKeys(pk, sk);
     if (!(await this.exists(pk, sk))) {
@@ -348,7 +350,7 @@ export default abstract class Model<T> {
    * @returns the batch get operation result
    */
   private async getSingleBatch(
-    keys: Key[] | Array<{ pk: any; sk?: any }>,
+    keys: Keys,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
     let params: DocumentClient.BatchGetItemInput;
@@ -385,7 +387,7 @@ export default abstract class Model<T> {
    * @returns all the matching items
    */
   public async batchGet(
-    keys: Key[] | Array<{ pk: any; sk?: any }>,
+    keys: Keys,
     options?: Partial<DocumentClient.BatchGetItemInput>,
   ): Promise<T[]> {
     if (keys.length === 0) {
@@ -403,7 +405,7 @@ export default abstract class Model<T> {
       const batches = splitBatch(keys);
       // Perform the batchGet operation for each batch
       const responsesBatches: T[][] = await Promise.all(
-        batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
+        batches.map((batch: CompositeKey[]) => this.getSingleBatch(batch, options)),
       );
       // Flatten batches of responses in array of users' data
       return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
@@ -412,33 +414,33 @@ export default abstract class Model<T> {
     const batches = splitBatch(keys);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
-      batches.map((batch: Key[]) => this.getSingleBatch(batch, options)),
+      batches.map((batch: KeyValue[]) => this.getSingleBatch(batch, options)),
     );
     // Flatten batches of responses in array of users' data
     return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
   }
 
   public async update(
-    pk: Key,
+    pk: KeyValue,
     actions: IUpdateActions,
     options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
 
   public async update(
-    pk: Key,
-    sk: Key,
+    pk: KeyValue,
+    sk: KeyValue,
     actions: IUpdateActions,
     options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
 
   public async update(
-    pk: Key,
-    sk_actions: Key | IUpdateActions,
+    pk: KeyValue,
+    sk_actions: KeyValue | IUpdateActions,
     actions_options?: IUpdateActions | Partial<DocumentClient.UpdateItemInput>,
     options?: Partial<DocumentClient.UpdateItemInput>,
   ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> {
     // Handle overloading
-    let sk: Key;
+    let sk: KeyValue;
     let updateActions: IUpdateActions;
     let nativeOptions: Partial<DocumentClient.UpdateItemInput>;
     if (!isKey(sk_actions)) {
@@ -472,5 +474,14 @@ export default abstract class Model<T> {
       keys[this.sk] = sk;
     }
     return keys;
+  }
+
+  private static getOptions(
+    sk_options: KeyValue | Partial<DocumentClient.GetItemInput>,
+    options: Partial<DocumentClient.GetItemInput>,
+  ): Partial<DocumentClient.GetItemInput> {
+    return sk_options != null && isKey(sk_options)
+      ? options
+      : (sk_options as Partial<DocumentClient.GetItemInput>);
   }
 }
