@@ -3,6 +3,7 @@
 [![npm version](https://badge.fury.io/js/dynamodels.svg)](https://badge.fury.io/js/dynamodels)
 [![Build Status](https://travis-ci.org/MarioArnt/dynamodels.svg?branch=master)](https://travis-ci.org/MarioArnt/dynamodels)
 [![codecov](https://codecov.io/gh/MarioArnt/dynamodels/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodels)
+[![Maintainability](https://api.codeclimate.com/v1/badges/94282d95aa54fb567242/maintainability)](https://codeclimate.com/github/MarioArnt/dynamodels/maintainability)
 [![Known Vulnerabilities](https://snyk.io/test/github/MarioArnt/dynamodels/badge.svg)](https://snyk.io/test/github/MarioArnt/dynamodels)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
