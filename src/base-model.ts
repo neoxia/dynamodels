@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
-import { ObjectSchema, validate } from '@hapi/joi';
+import { ObjectSchema } from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
@@ -118,7 +118,7 @@ export default abstract class Model<T> {
       throw Error('No item to save');
     }
     if (this.schema) {
-      const { error } = validate(toSave, this.schema);
+      const { error } = this.schema.validate(toSave);
       if (error) {
         throw new ValidationError('Validation error', error);
       }
@@ -256,6 +256,9 @@ export default abstract class Model<T> {
     options?: Partial<DocumentClient.DeleteItemInput>,
   ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
     // Handle method overloading
+    if (!pk_item) {
+      throw Error('Missing HashKey');
+    }
     const pk = (pk_item as any)[this.pk] != null ? (pk_item as any)[this.pk] : pk_item;
     const sk: Key = sk_options != null && isKey(sk_options) ? sk_options : null;
     const deleteOptions: Partial<DocumentClient.GetItemInput> =
@@ -388,14 +391,16 @@ export default abstract class Model<T> {
     if (keys.length === 0) {
       return [];
     }
-    if (isComposite(keys)) {
-      // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-      const batches: Array<Array<{ pk: any; sk?: any }>> = keys.reduce((all, one, idx) => {
+    const splitBatch = (_keys: any[]) =>
+      _keys.reduce((all, one, idx) => {
         const chunk = Math.floor(idx / 100);
         const currentBatches = all;
         currentBatches[chunk] = [].concat(all[chunk] || [], one);
         return currentBatches;
       }, []);
+    if (isComposite(keys)) {
+      // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
+      const batches = splitBatch(keys);
       // Perform the batchGet operation for each batch
       const responsesBatches: T[][] = await Promise.all(
         batches.map((batch: Array<{ pk: any; sk?: any }>) => this.getSingleBatch(batch, options)),
@@ -404,12 +409,7 @@ export default abstract class Model<T> {
       return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
     }
     // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-    const batches: Key[][] = keys.reduce((all, one, idx) => {
-      const chunk = Math.floor(idx / 100);
-      const currentBatches = all;
-      currentBatches[chunk] = [].concat(all[chunk] || [], one);
-      return currentBatches;
-    }, []);
+    const batches = splitBatch(keys);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
       batches.map((batch: Key[]) => this.getSingleBatch(batch, options)),

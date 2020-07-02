@@ -21,13 +21,17 @@ export default abstract class Condition<T> {
     this.values = values;
   }
 
-  public and(condition: Condition<T>): Condition<T> {
+  protected prepareExpression(condition: Condition<T>): void {
     condition.attributes.forEach((value, key) => {
       this.attributes.set(key, value);
     });
     condition.values.forEach((value, key) => {
       this.values.set(key, value);
     });
+  }
+
+  public and(condition: Condition<T>): Condition<T> {
+    this.prepareExpression(condition);
     this.expression = `${this.expression} AND (${condition.expression})`;
     return this;
   }
