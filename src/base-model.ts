@@ -1,12 +1,14 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import { ObjectSchema, validate } from '@hapi/joi';
 import { AWSError } from 'aws-sdk';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DocumentClient, AttributeValue } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import Query from './query';
 import Scan from './scan';
 import { IUpdateActions, buildUpdateActions } from './update-operators';
 import ValidationError from './validation-error';
+import { ODataParamaters, toOptions } from './odata';
+import { IPaginatedResult } from './operation';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 export type Key = string | number | Buffer;
@@ -300,6 +302,40 @@ export default abstract class Model<T> {
    */
   public async count(): Promise<number> {
     return this.scan().count();
+  }
+
+  /**
+   * Performs a OData-like request.
+   * @param params
+   */
+  public async request(params: ODataParamaters): Promise<IPaginatedResult<T> | number> {
+    const options = toOptions(params);
+    if (options.$query) {
+      const query = this.query(options.$index)
+        .keys(options.$query)
+        .filter(options.$filter)
+        .paginate({
+          size: options.$top,
+          lastEvaluatedKey: {
+            [this.pk]: options.$skip.pk as AttributeValue,
+            [this.sk]: options.$skip.sk as AttributeValue,
+          },
+        })
+        .sort(options.$orderby)
+        .projection(options.$select);
+      return options.$count ? query.count() : query.exec();
+    }
+    const query = this.scan()
+      .filter(options.$filter)
+      .paginate({
+        size: options.$top,
+        lastEvaluatedKey: {
+          [this.pk]: options.$skip.pk as AttributeValue,
+          [this.sk]: options.$skip.sk as AttributeValue,
+        },
+      })
+      .projection(options.$select);
+    return options.$count ? query.count() : query.exec();
   }
 
   /**
