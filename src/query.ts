@@ -34,8 +34,8 @@ export default class Query<T> extends Operation<T> {
       builtConditions = buildKeyConditions(keyConditions);
     }
     this.params.KeyConditionExpression = builtConditions.expression;
-    this.addExpressionAttributes(builtConditions.attributes);
-    this.addExpressionAttributes(builtConditions.values);
+    this.addExpressionAttributes(builtConditions.attributes, 'name');
+    this.addExpressionAttributes(builtConditions.values, 'value');
     return this;
   }
 
