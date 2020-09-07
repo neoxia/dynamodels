@@ -1,12 +1,12 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import PaginationMode from './paginate-mode';
-import { Key } from './base-model';
+import { KeyValue } from './base-model';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 export interface IPaginationOptions {
   mode?: PaginationMode;
-  lastEvaluatedKey?: { [attribute: string]: Key };
+  lastEvaluatedKey?: { [attribute: string]: KeyValue };
   size: number;
 }
 
