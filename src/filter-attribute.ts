@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import ConditionAttribute from './condition-attribute';
 import { FilterValue, FilterCondition } from './filter-conditions';
-import { Key } from './base-model';
+import { KeyValue } from './base-model';
 /* eslint-enable import/no-unresolved,no-unused-vars */
 
 interface IAttributesValues {
@@ -31,7 +31,7 @@ export default class FilterAttribute extends ConditionAttribute<FilterValue> {
     return new FilterCondition(...super.prepareLe(value));
   }
 
-  public between(lower: Key, upper: Key): FilterCondition {
+  public between(lower: KeyValue, upper: KeyValue): FilterCondition {
     return new FilterCondition(...super.prepareBetween(lower, upper));
   }
 
@@ -70,33 +70,44 @@ export default class FilterAttribute extends ConditionAttribute<FilterValue> {
     return { id, attr, values };
   }
 
-  public null(): FilterCondition {
+  private nullOperation(not = false): FilterCondition {
     const { id, attr, values } = this.prepareAttributesAndValues();
-    return new FilterCondition(`#${id} = :null`, attr, values);
+    return new FilterCondition(`#${id} ${not ? '<>' : '='} :null`, attr, values);
+  }
+
+  private existsOperation(not = false): FilterCondition {
+    const { id, attr } = this.prepareAttributes();
+    const operator = not ? 'attribute_not_exists' : 'attribute_exists';
+    return new FilterCondition(`${operator}(#${id})`, attr, new Map());
+  }
+
+  private containsOperation(value: string, not = false): FilterCondition {
+    const { id, attr, values } = this.prepareOp(value);
+    const operator = not ? 'NOT contains' : 'contains';
+    return new FilterCondition(`${operator}(#${id}, :${id})`, attr, values);
+  }
+
+  public null(): FilterCondition {
+    return this.nullOperation();
   }
 
   public notNull(): FilterCondition {
-    const { id, attr, values } = this.prepareAttributesAndValues();
-    return new FilterCondition(`#${id} <> :null`, attr, values);
+    return this.nullOperation(true);
   }
 
   public exists(): FilterCondition {
-    const { id, attr } = this.prepareAttributes();
-    return new FilterCondition(`attribute_exists(#${id})`, attr, new Map());
+    return this.existsOperation();
   }
 
   public notExists(): FilterCondition {
-    const { id, attr } = this.prepareAttributes();
-    return new FilterCondition(`attribute_not_exists(#${id})`, attr, new Map());
+    return this.existsOperation(true);
   }
 
   public contains(value: string): FilterCondition {
-    const { id, attr, values } = this.prepareOp(value);
-    return new FilterCondition(`contains(#${id}, :${id})`, attr, values);
+    return this.containsOperation(value);
   }
 
   public notContains(value: string): FilterCondition {
-    const { id, attr, values } = this.prepareOp(value);
-    return new FilterCondition(`NOT contains(#${id}, :${id})`, attr, values);
+    return this.containsOperation(value, true);
   }
 }

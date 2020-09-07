@@ -66,8 +66,8 @@ export default abstract class Operation<T> {
       builtConditions = buildFilterConditions(filterConditions);
     }
     this.params.FilterExpression = builtConditions.expression;
-    this.addExpressionAttributes(builtConditions.attributes, 'name');
-    this.addExpressionAttributes(builtConditions.values, 'value');
+    this.addExpressionAttributes(builtConditions.attributes, 'names');
+    this.addExpressionAttributes(builtConditions.values, 'values');
   }
 
   /**
@@ -128,7 +128,7 @@ export default abstract class Operation<T> {
       return '';
     });
     this.params.ProjectionExpression = expression.join(', ');
-    this.addExpressionAttributes(attributes, 'name');
+    this.addExpressionAttributes(attributes, 'names');
   }
 
   protected buildResponse(
@@ -148,10 +148,10 @@ export default abstract class Operation<T> {
     attributes:
       | DocumentClient.ExpressionAttributeNameMap
       | DocumentClient.ExpressionAttributeValueMap,
-    type: 'name' | 'value',
+    type: 'names' | 'values',
   ) {
-    const key = type === 'name' ? 'ExpressionAttributeNames' : 'ExpressionAttributeValues';
     if (Object.keys(attributes).length > 0) {
+      const key = type === 'names' ? 'ExpressionAttributeNames' : 'ExpressionAttributeValues';
       if (!this.params[key]) {
         this.params[key] = {};
       }

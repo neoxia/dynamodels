@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved,no-unused-vars */
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
-import { Key } from './base-model';
+import { KeyValue } from './base-model';
 import { IFilterCondition, IKeyCondition } from './operators';
 import { IBuiltConditions } from './conditions';
 import { FilterValue, IFilterConditionOperators, attr } from './filter-conditions';
@@ -13,7 +13,7 @@ type IConditions = IKeyConditions | IFilterConditions;
 type ICondition = IKeyCondition | IFilterCondition;
 
 export interface IKeyConditions {
-  [key: string]: IKeyCondition | Key;
+  [key: string]: IKeyCondition | KeyValue;
 }
 
 export interface IFilterConditions {
@@ -51,7 +51,7 @@ const operatorToExpression = (
         .build();
     case 'BETWEEN':
       return attr(field)
-        .between(values[0] as Key, values[1] as Key)
+        .between(values[0] as KeyValue, values[1] as KeyValue)
         .build();
     case 'NOT_NULL':
       return attr(field)
@@ -88,7 +88,9 @@ const operatorToExpression = (
   }
 };
 
-const isComplexCondition = (condition: ICondition | Key | FilterValue): condition is ICondition =>
+const isComplexCondition = (
+  condition: ICondition | KeyValue | FilterValue,
+): condition is ICondition =>
   typeof condition === 'object' && (condition as ICondition).values !== undefined;
 
 const buildConditions = (keyConditions: IConditions): IBuiltConditions => {

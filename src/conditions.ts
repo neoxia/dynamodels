@@ -30,10 +30,14 @@ export default abstract class Condition<T> {
     });
   }
 
-  public and(condition: Condition<T>): Condition<T> {
+  protected combine(condition: Condition<T>, logicalOperator: 'AND' | 'OR'): Condition<T> {
     this.prepareExpression(condition);
-    this.expression = `${this.expression} AND (${condition.expression})`;
+    this.expression = `${this.expression} ${logicalOperator} (${condition.expression})`;
     return this;
+  }
+
+  public and(condition: Condition<T>): Condition<T> {
+    return this.combine(condition, 'AND');
   }
 
   public build(): IBuiltConditions {
