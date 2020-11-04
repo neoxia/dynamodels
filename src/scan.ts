@@ -9,6 +9,11 @@ import { FilterCondition } from './filter-conditions';
 export default class Scan<T> extends Operation<T> {
   protected params: DocumentClient.ScanInput;
 
+  public limit(limit: number): Scan<T> {
+    this.doLimit(limit);
+    return this;
+  }
+
   public consistent(isConsistent?: boolean): Scan<T> {
     this.doConsistent(isConsistent);
     return this;

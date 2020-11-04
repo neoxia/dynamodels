@@ -48,6 +48,11 @@ export default class Query<T> extends Operation<T> {
     return this;
   }
 
+  public limit(limit: number): Query<T> {
+    this.doLimit(limit);
+    return this;
+  }
+
   public consistent(isConsistent?: boolean): Query<T> {
     this.doConsistent(isConsistent);
     return this;

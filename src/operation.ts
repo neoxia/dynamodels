@@ -21,9 +21,9 @@ export default abstract class Operation<T> {
 
   protected page: IPaginationOptions;
 
-  private pk: string;
+  private readonly pk: string;
 
-  private sk: string;
+  private readonly sk: string;
 
   constructor(
     documentClient: DocumentClient,
@@ -71,9 +71,21 @@ export default abstract class Operation<T> {
   }
 
   /**
+   * Set the scan/query operation number of items to return
+   * @param limit the number of element to return
+   * @returns the modified query/scan operation
+   */
+  public abstract limit(limit: number): Operation<T>;
+
+  protected doLimit(limit: number): void {
+    const isValid = Number.isInteger(Number(limit));
+    this.params.Limit = isValid ? Number(limit) : null;
+  }
+
+  /**
    * Make the scan/query operation read-consistent
    * @param isConsistent (Optional) whether or not the operation should
-   * be read-consistent. true if ommited.
+   * be read-consistent. true if omitted.
    * The modified query/scan operation
    */
   public abstract consistent(isConsistent?: boolean): Operation<T>;
@@ -238,6 +250,16 @@ export default abstract class Operation<T> {
     } while (lastKey != null);
     this.params.Select = null;
     return count;
+  }
+
+  /**
+   * Execute the query and return the first result matching the query criteria
+   * @returns the first matching element
+   */
+  public async first(): Promise<T> {
+    this.params.Limit = 1;
+    const result = await this.doExec();
+    return result.items[0];
   }
 
   public getParams(): DocumentClient.ScanInput | DocumentClient.QueryInput {
