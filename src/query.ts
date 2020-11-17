@@ -74,7 +74,9 @@ export default class Query<T> extends Operation<T> {
    * @param direction 'asc' or 'desc'
    */
   public sort(direction: 'asc' | 'desc'): Query<T> {
-    this.params.ScanIndexForward = direction === 'desc';
+    // According to documentation ScanIndexForward must be true if ascending
+    // @link https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
+    this.params.ScanIndexForward = direction === 'asc';
     return this;
   }
 
