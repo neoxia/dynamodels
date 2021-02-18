@@ -14,6 +14,8 @@ export interface IPaginatedResult<T> {
   count: number;
 }
 
+export type PageReceivedHook<T> = (page: IPaginatedResult<T>) => void;
+
 export default abstract class Operation<T> {
   protected documentClient: DocumentClient;
 
@@ -216,16 +218,19 @@ export default abstract class Operation<T> {
    * By iteratively fetching next 1MB page of results until last evaluated key is null
    * @returns All the results
    */
-  public async execAll(): Promise<T[]> {
+  public async execAll(onPageReceived?: PageReceivedHook<T>): Promise<T[]> {
     let lastKey = null;
     const items = [];
     do {
       this.params.ExclusiveStartKey = lastKey;
       // Necessary to have lastEvaluatedKey
       /* eslint-disable-next-line no-await-in-loop */
-      const result = await this.doExec();
-      items.push(...result.items);
-      lastKey = result.nextPage.lastEvaluatedKey;
+      const page = await this.doExec();
+      items.push(...page.items);
+      lastKey = page.nextPage.lastEvaluatedKey;
+      if (onPageReceived) {
+        onPageReceived(page);
+      }
     } while (lastKey != null);
     return items as T[];
   }
