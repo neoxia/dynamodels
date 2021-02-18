@@ -14,6 +14,8 @@ export interface IPaginatedResult<T> {
   count: number;
 }
 
+export type PageReceivedHook<T> = (page: IPaginatedResult<T>) => void;
+
 export default abstract class Operation<T> {
   protected documentClient: DocumentClient;
 
@@ -216,7 +218,7 @@ export default abstract class Operation<T> {
    * By iteratively fetching next 1MB page of results until last evaluated key is null
    * @returns All the results
    */
-  public async execAll(onPageReceived?: (page: IPaginatedResult<T>) => void): Promise<T[]> {
+  public async execAll(onPageReceived?: PageReceivedHook<T>): Promise<T[]> {
     let lastKey = null;
     const items = [];
     do {
