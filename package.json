@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "aws-sdk": "^2.888.0",
+    "aws-sdk": "^2.986.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
