@@ -1,16 +1,12 @@
 {
-  "extends": ["airbnb-base"],
-  "plugins": ["@typescript-eslint"],
   "parser": "@typescript-eslint/parser",
-  "env": {
-    "node": true
-  },
-  "rules": {
-    "camelcase": "warn",
-    "no-dupe-class-members": "off",
-    "implicit-arrow-linebreak": "off",
-    "operator-linebreak": "off",
-    "function-paren-newline": "off",
-    "import/extensions": "off"
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+  ],
+  "plugins": ["prettier"],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./tsconfig.eslint.json"
   }
 }

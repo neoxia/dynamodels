@@ -1,5 +1,3 @@
-/* eslint-env node, jest */
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import CompositeKeyModel from './models/composite-keys';
 import NumericalKeysModel from './models/numerical-keys';
 import { clearTables } from './hooks/create-tables';
@@ -19,14 +17,12 @@ import {
   contains,
   notContains,
   beginsWith,
-} from '../src/operators';
+} from '../src';
 import { key } from '../src/key-conditions';
 import { attr, not } from '../src/filter-conditions';
 import { IPaginationOptions } from '../src/paginate';
 import generateData from './factories';
 import PaginationMode from '../src/paginate-mode';
-
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 jest.setTimeout(20 * 1000);
 
@@ -127,7 +123,7 @@ describe('The query method [index]', () => {
   });
 });
 
-describe('The query method [key conditions / object synthax]', () => {
+describe('The query method [key conditions / object syntax]', () => {
   const model = new CompositeKeyModel();
   const num = new NumericalKeysModel();
   const nbEntries = 40;
@@ -362,7 +358,7 @@ describe('The query method [key conditions / object synthax]', () => {
   });
 });
 
-describe('The query method [key conditions / fluid synthax]', () => {
+describe('The query method [key conditions / fluid syntax]', () => {
   const model = new CompositeKeyModel();
   const num = new NumericalKeysModel();
   const nbEntries = 40;
@@ -374,10 +370,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
   describe('Hash key', () => {
     describe('EQ', () => {
       test('should return items where EQ condition is true [string]', async () => {
-        const result = await model
-          .query()
-          .keys(key('hashkey').eq('hashkey-1'))
-          .exec();
+        const result = await model.query().keys(key('hashkey').eq('hashkey-1')).exec();
         expect(result.count).toBe(20);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
         expect(result.items.length).toBe(20);
@@ -405,11 +398,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
         const result = await model
           .query()
           // .consistent()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').eq('rangekey-1')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').eq('rangekey-1')))
           .exec();
         expect(result.count).toBe(1);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -420,11 +409,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where EQ condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(2)
-              .and(key('rangekey').eq(21)),
-          )
+          .keys(key('hashkey').eq(2).and(key('rangekey').eq(21)))
           .exec();
         expect(result.count).toBe(1);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -437,11 +422,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where LE condition is true [string]', async () => {
         const result = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').le('rangekey-14')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').le('rangekey-14')))
           .exec();
         expect(result.count).toBe(7);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -451,11 +432,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where LE condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(1)
-              .and(key('rangekey').le(14)),
-          )
+          .keys(key('hashkey').eq(1).and(key('rangekey').le(14)))
           .exec();
         expect(result.count).toBe(15);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -467,11 +444,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where LT condition is true [string]', async () => {
         const result = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').lt('rangekey-14')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').lt('rangekey-14')))
           .exec();
         expect(result.count).toBe(6);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -481,11 +454,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where LT condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(1)
-              .and(key('rangekey').lt(14)),
-          )
+          .keys(key('hashkey').eq(1).and(key('rangekey').lt(14)))
           .exec();
         expect(result.count).toBe(14);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -497,11 +466,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where GE condition is true [string]', async () => {
         const result = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').ge('rangekey-14')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').ge('rangekey-14')))
           .exec();
         expect(result.count).toBe(14);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -511,11 +476,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where GE condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(1)
-              .and(key('rangekey').ge(14)),
-          )
+          .keys(key('hashkey').eq(1).and(key('rangekey').ge(14)))
           .exec();
         expect(result.count).toBe(6);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -527,11 +488,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where GT condition is true [string]', async () => {
         const result = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').gt('rangekey-11')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').gt('rangekey-11')))
           .exec();
         expect(result.count).toBe(16);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -541,22 +498,14 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where GT condition is true [string + count]', async () => {
         const count = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').gt('rangekey-11')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').gt('rangekey-11')))
           .count();
         expect(count).toBe(16);
       });
       test('should return items where GT condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(1)
-              .and(key('rangekey').ge(11)),
-          )
+          .keys(key('hashkey').eq(1).and(key('rangekey').ge(11)))
           .exec();
         expect(result.count).toBe(9);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -588,11 +537,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where BETWEEN condition is true [number]', async () => {
         const result = await num
           .query()
-          .keys(
-            key('hashkey')
-              .eq(1)
-              .and(key('rangekey').between(7, 14)),
-          )
+          .keys(key('hashkey').eq(1).and(key('rangekey').between(7, 14)))
           .exec();
         expect(result.count).toBe(8);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -604,11 +549,7 @@ describe('The query method [key conditions / fluid synthax]', () => {
       test('should return items where BEGINS_WITH condition is true [string]', async () => {
         const result = await model
           .query()
-          .keys(
-            key('hashkey')
-              .eq('hashkey-1')
-              .and(key('rangekey').beginsWith('rangekey-1')),
-          )
+          .keys(key('hashkey').eq('hashkey-1').and(key('rangekey').beginsWith('rangekey-1')))
           .exec();
         expect(result.count).toBe(11);
         expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -629,39 +570,23 @@ describe('The query method [pagination - native mode]', () => {
   });
   let nextPage: IPaginationOptions;
   test('should return the first page of items with the correct size', async () => {
-    const page1 = await model
-      .query()
-      .keys({ hashkey: 'hashkey-1' })
-      .paginate({ size: 50 })
-      .exec();
+    const page1 = await model.query().keys({ hashkey: 'hashkey-1' }).paginate({ size: 50 }).exec();
     nextPage = page1.nextPage;
     expect(page1.items.length).toBe(50);
     expect(page1.nextPage.lastEvaluatedKey).toBeTruthy();
     expect(page1.nextPage.size).toBe(50);
   });
   test('should return the next page of items with the correct size', async () => {
-    const page2 = await model
-      .query()
-      .keys({ hashkey: 'hashkey-1' })
-      .paginate(nextPage)
-      .exec();
+    const page2 = await model.query().keys({ hashkey: 'hashkey-1' }).paginate(nextPage).exec();
     nextPage = page2.nextPage;
     expect(page2.items.length).toBe(50);
     expect(page2.nextPage.lastEvaluatedKey).toBeTruthy();
     expect(page2.nextPage.size).toBe(50);
   });
   test('should return a null last evaluated key when last page is fetched', async () => {
-    const page3 = await model
-      .query()
-      .keys({ hashkey: 'hashkey-1' })
-      .paginate(nextPage)
-      .exec();
+    const page3 = await model.query().keys({ hashkey: 'hashkey-1' }).paginate(nextPage).exec();
     nextPage = page3.nextPage;
-    const page4 = await model
-      .query()
-      .keys({ hashkey: 'hashkey-1' })
-      .paginate(nextPage)
-      .exec();
+    const page4 = await model.query().keys({ hashkey: 'hashkey-1' }).paginate(nextPage).exec();
     // expect(page4.count).toBe(nbEntries);
     expect(page4.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(page4.items.length).toBe(0.5 * 394 - 3 * 50);
@@ -743,7 +668,7 @@ describe('The query method [pagination - constant page mode]', () => {
   });
 });
 
-describe('The query method [filtering / object synthax]', () => {
+describe('The query method [filtering / object syntax]', () => {
   const model = new CompositeKeyModel();
   const nbEntries = 40;
   beforeAll(async () => {
@@ -805,7 +730,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(19);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(19);
-      expect(result.items.some((i) => i.string === 'string-2')).toBe(false);
+      expect(result.items.some((i) => i.string! === 'string-2')).toBe(false);
     });
     test('should return items where NEQ condition is true [number]', async () => {
       const result = await model
@@ -819,7 +744,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(19);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(19);
-      expect(result.items.some((i) => i.string === 'string-8')).toBe(false);
+      expect(result.items.some((i) => i.string! === 'string-8')).toBe(false);
     });
     test('should return items where NEQ condition is true [boolean]', async () => {
       const result = await model
@@ -893,7 +818,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') <= 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') <= 0)).toBe(true);
     });
     test('should return items where LE condition is true [number]', async () => {
       const result = await model
@@ -907,7 +832,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.number <= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  <= 12)).toBe(true);
     });
   });
   describe('LT', () => {
@@ -923,7 +848,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(2);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') < 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') < 0)).toBe(true);
     });
     test('should return items where LT condition is true [number]', async () => {
       const result = await model
@@ -937,7 +862,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number < 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  < 12)).toBe(true);
     });
   });
   describe('GE', () => {
@@ -953,7 +878,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(8);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(8);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') >= 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') >= 0)).toBe(true);
     });
     test('should return items where GE condition is true [number]', async () => {
       const result = await model
@@ -967,7 +892,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
-      expect(result.items.every((i) => i.number >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
     });
   });
   describe('GT', () => {
@@ -983,7 +908,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') > 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') > 0)).toBe(true);
     });
     test('should return items where GT condition is true [number]', async () => {
       const result = await model
@@ -997,7 +922,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.number >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
     });
   });
   describe('BETWEEN', () => {
@@ -1015,7 +940,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0,
+          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -1031,7 +956,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number >= 6 && i.number <= 17)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 6 && i.number!  <= 17)).toBe(true);
     });
   });
   describe('NOT_EXISTS', () => {
@@ -1206,7 +1131,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.string != null)).toBe(true);
+      expect(result.items.every((i) => i.string! != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [number]', async () => {
       const result = await model
@@ -1219,7 +1144,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number != null)).toBe(true);
+      expect(result.items.every((i) => i.number!  != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1286,7 +1211,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.string == null)).toBe(true);
+      expect(result.items.every((i) => i.string! == null)).toBe(true);
     });
     test('should return items where NULL condition is true [number]', async () => {
       const result = await model
@@ -1299,7 +1224,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number == null)).toBe(true);
+      expect(result.items.every((i) => i.number!  == null)).toBe(true);
     });
     test('should return items where NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1366,7 +1291,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(5);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
-      expect(result.items.every((i) => i.string.includes('ing-1'))).toBe(true);
+      expect(result.items.every((i) => i.string!.includes('ing-1'))).toBe(true);
     });
   });
   describe('NOT_CONTAINS', () => {
@@ -1381,7 +1306,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(15);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(15);
-      expect(result.items.every((i) => !(i.string && i.string.includes('ing-1')))).toBe(true);
+      expect(result.items.every((i) => !(i.string! && i.string!.includes('ing-1')))).toBe(true);
     });
   });
   describe('BEGINS_WITH', () => {
@@ -1396,7 +1321,7 @@ describe('The query method [filtering / object synthax]', () => {
       expect(result.count).toBe(5);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
-      expect(result.items.every((i) => i.string.match(/^string-1/))).toBe(true);
+      expect(result.items.every((i) => i.string!.match(/^string-1/))).toBe(true);
     });
   });
   test('should combine multiple conditions with AND logical operator', async () => {
@@ -1413,22 +1338,18 @@ describe('The query method [filtering / object synthax]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(result.items.length).toBe(2);
     expect(
-      result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12),
+      result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number!  >= 12),
     ).toBe(true);
   });
   test('should not filter if empty object is passed', async () => {
-    const result = await model
-      .query()
-      .keys(key('hashkey').eq('hashkey-1'))
-      .filter({})
-      .exec();
+    const result = await model.query().keys(key('hashkey').eq('hashkey-1')).filter({}).exec();
     expect(result.count).toBe(20);
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(result.items.length).toBe(20);
   });
 });
 
-describe('The query method [filtering / fluid synthax]', () => {
+describe('The query method [filtering / fluid syntax]', () => {
   const model = new CompositeKeyModel();
   const nbEntries = 40;
   beforeAll(async () => {
@@ -1482,7 +1403,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(19);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(19);
-      expect(result.items.some((i) => i.string === 'string-2')).toBe(false);
+      expect(result.items.some((i) => i.string! === 'string-2')).toBe(false);
     });
     test('should return items where NEQ condition is true [number]', async () => {
       const result = await model
@@ -1494,7 +1415,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(19);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(19);
-      expect(result.items.some((i) => i.string === 'string-8')).toBe(false);
+      expect(result.items.some((i) => i.string! === 'string-8')).toBe(false);
     });
     test('should return items where NEQ condition is true [boolean]', async () => {
       const result = await model
@@ -1558,7 +1479,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') <= 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') <= 0)).toBe(true);
     });
     test('should return items where LE condition is true [number]', async () => {
       const result = await model
@@ -1570,7 +1491,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.number <= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  <= 12)).toBe(true);
     });
   });
   describe('LT', () => {
@@ -1584,7 +1505,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(2);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') < 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') < 0)).toBe(true);
     });
     test('should return items where LT condition is true [number]', async () => {
       const result = await model
@@ -1596,7 +1517,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number < 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  < 12)).toBe(true);
     });
   });
   describe('GE', () => {
@@ -1609,7 +1530,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(8);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(8);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') >= 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') >= 0)).toBe(true);
     });
     test('should return items where GE condition is true [number]', async () => {
       const result = await model
@@ -1620,7 +1541,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
-      expect(result.items.every((i) => i.number >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
     });
   });
   describe('GT', () => {
@@ -1633,7 +1554,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.string.localeCompare('string-12') > 0)).toBe(true);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') > 0)).toBe(true);
     });
     test('should return items where GT condition is true [number]', async () => {
       const result = await model
@@ -1644,7 +1565,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.number >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
     });
   });
   describe('BETWEEN', () => {
@@ -1660,7 +1581,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string.localeCompare('string-3') >= 0 && i.string.localeCompare('string-8') <= 0,
+          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -1675,7 +1596,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number >= 6 && i.number <= 17)).toBe(true);
+      expect(result.items.every((i) => i.number!  >= 6 && i.number!  <= 17)).toBe(true);
     });
   });
   describe('NOT_EXISTS', () => {
@@ -1824,7 +1745,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.string != null)).toBe(true);
+      expect(result.items.every((i) => i.string! != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [number]', async () => {
       const result = await model
@@ -1835,7 +1756,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number != null)).toBe(true);
+      expect(result.items.every((i) => i.number!  != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1892,7 +1813,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.string == null)).toBe(true);
+      expect(result.items.every((i) => i.string! == null)).toBe(true);
     });
     test('should return items where NULL condition is true [number]', async () => {
       const result = await model
@@ -1903,7 +1824,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number == null)).toBe(true);
+      expect(result.items.every((i) => i.number!  == null)).toBe(true);
     });
     test('should return items where NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1960,7 +1881,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(5);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
-      expect(result.items.every((i) => i.string.includes('ing-1'))).toBe(true);
+      expect(result.items.every((i) => i.string!.includes('ing-1'))).toBe(true);
     });
   });
   describe('NOT_CONTAINS', () => {
@@ -1973,7 +1894,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(15);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(15);
-      expect(result.items.every((i) => !(i.string && i.string.includes('ing-1')))).toBe(true);
+      expect(result.items.every((i) => !(i.string! && i.string!.includes('ing-1')))).toBe(true);
     });
   });
   describe('BEGINS_WITH', () => {
@@ -1986,7 +1907,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(5);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
-      expect(result.items.every((i) => i.string.match(/^string-1/))).toBe(true);
+      expect(result.items.every((i) => i.string!.match(/^string-1/))).toBe(true);
     });
   });
   describe('OR', () => {
@@ -1996,17 +1917,13 @@ describe('The query method [filtering / fluid synthax]', () => {
         .keys(key('hashkey').eq('hashkey-1'))
         // BW: 10, 12, 14, 16, 18
         // CN: 4
-        .filter(
-          attr('string')
-            .beginsWith('string-1')
-            .or(attr('string').contains('ing-4')),
-        )
+        .filter(attr('string').beginsWith('string-1').or(attr('string').contains('ing-4')))
         .exec();
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
       expect(
-        result.items.every((i) => i.string.match(/^string-1/) || i.string.includes('ing-4')),
+        result.items.every((i) => i.string!.match(/^string-1/) || i.string!.includes('ing-4')),
       ).toBe(true);
     });
   });
@@ -2026,7 +1943,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
       expect(
-        result.items.every((i) => i.string.match(/^string-1/) && i.bool === true && i.number >= 12),
+        result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number!  >= 12),
       ).toBe(true);
     });
   });
@@ -2037,17 +1954,14 @@ describe('The query method [filtering / fluid synthax]', () => {
         .keys(key('hashkey').eq('hashkey-1'))
         .filter(
           // bool = true AND number < 8 OR begins_with(string, string-1)
-          attr('bool')
-            .eq(true)
-            .and(attr('number').lt(8))
-            .or(attr('string').beginsWith('string-1')),
+          attr('bool').eq(true).and(attr('number').lt(8)).or(attr('string').beginsWith('string-1')),
         )
         .exec();
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
       expect(
-        result.items.every((i) => (i.bool === true && i.number < 8) || i.string.match(/^string-1/)),
+        result.items.every((i) => (i.bool === true && i.number!  < 8) || i.string!.match(/^string-1/)),
       ).toBe(true);
     });
   });
@@ -2062,18 +1976,14 @@ describe('The query method [filtering / fluid synthax]', () => {
           // bool = true AND (number < 8 OR begins_with(string, string-1))
           attr('bool')
             .eq(true)
-            .and(
-              attr('number')
-                .lt(8)
-                .or(attr('string').beginsWith('string-1')),
-            ),
+            .and(attr('number').lt(8).or(attr('string').beginsWith('string-1'))),
         )
         .exec();
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
       expect(
-        result.items.every((i) => i.bool === true && (i.number < 8 || i.string.match(/^string-1/))),
+        result.items.every((i) => i.bool === true && (i.number!  < 8 || i.string!.match(/^string-1/))),
       ).toBe(true);
     });
   });
@@ -2087,7 +1997,7 @@ describe('The query method [filtering / fluid synthax]', () => {
       expect(result.count).toBe(15);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(15);
-      expect(result.items.every((i) => !i.string || !i.string.match(/^string-1/))).toBe(true);
+      expect(result.items.every((i) => !i.string! || !i.string!.match(/^string-1/))).toBe(true);
     });
   });
   describe('NOT/OR', () => {
@@ -2099,19 +2009,13 @@ describe('The query method [filtering / fluid synthax]', () => {
         // COND2: 1, 4, 7, 10, 13, 16, 19
         // OR : 1, 4, 7, 10, 12, 13, 16, 18, 19
         // NOT: 0, 2, 3, 5, 6, 8, 9, 11, 14, 15, 17
-        .filter(
-          not(
-            attr('string')
-              .beginsWith('string-1')
-              .or(attr('bool').eq(false)),
-          ),
-        )
+        .filter(not(attr('string').beginsWith('string-1').or(attr('bool').eq(false))))
         .exec();
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
       expect(
-        result.items.every((i) => !(i.bool === false || (i.string && i.string.match(/^string-1/)))),
+        result.items.every((i) => !(i.bool === false || (i.string! && i.string!.match(/^string-1/)))),
       ).toBe(true);
     });
   });
@@ -2127,10 +2031,7 @@ describe('The query method [sorting]', () => {
     await generateData(num, nbEntries, true);
   });
   test('should return all items sorted in ascending order if nothing is specified [string keys]', async () => {
-    const result = await model
-      .query()
-      .keys({ hashkey: 'hashkey-2' })
-      .exec();
+    const result = await model.query().keys({ hashkey: 'hashkey-2' }).exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(
       result.items.sort((i1, i2) => i1.rangekey.localeCompare(i2.rangekey)),
@@ -2138,11 +2039,7 @@ describe('The query method [sorting]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
   });
   test('should return all items sorted in ascending order if "asc" is specified [string keys]', async () => {
-    const result = await model
-      .query()
-      .keys({ hashkey: 'hashkey-2' })
-      .sort('asc')
-      .exec();
+    const result = await model.query().keys({ hashkey: 'hashkey-2' }).sort('asc').exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(
       result.items.sort((i1, i2) => i1.rangekey.localeCompare(i2.rangekey)),
@@ -2150,11 +2047,7 @@ describe('The query method [sorting]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
   });
   test('should return all items sorted in descending order if "desc" is specified [string keys]', async () => {
-    const result = await model
-      .query()
-      .keys({ hashkey: 'hashkey-2' })
-      .sort('desc')
-      .exec();
+    const result = await model.query().keys({ hashkey: 'hashkey-2' }).sort('desc').exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(
       result.items.sort((i1, i2) => i2.rangekey.localeCompare(i1.rangekey)),
@@ -2162,30 +2055,19 @@ describe('The query method [sorting]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
   });
   test('should return all items sorted in ascending order if nothing is specified [number keys]', async () => {
-    const result = await num
-      .query()
-      .keys({ hashkey: 1 })
-      .exec();
+    const result = await num.query().keys({ hashkey: 1 }).exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(result.items.sort((i1, i2) => i2.rangekey - i1.rangekey));
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
   });
   test('should return all items sorted in ascending order if "asc" is specified [number keys]', async () => {
-    const result = await num
-      .query()
-      .keys({ hashkey: 1 })
-      .sort('asc')
-      .exec();
+    const result = await num.query().keys({ hashkey: 1 }).sort('asc').exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(result.items.sort((i1, i2) => i2.rangekey - i1.rangekey));
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
   });
   test('should return all items sorted in descending order if "desc" is specified [number keys]', async () => {
-    const result = await num
-      .query()
-      .keys({ hashkey: 1 })
-      .sort('desc')
-      .exec();
+    const result = await num.query().keys({ hashkey: 1 }).sort('desc').exec();
     expect(result.count).toBe(20);
     expect(result.items).toEqual(result.items.sort((i1, i2) => i1.rangekey - i2.rangekey));
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -2193,9 +2075,9 @@ describe('The query method [sorting]', () => {
 });
 
 describe('The query method [projection]', () => {
-  test.todo('should project on sclar type [string]');
-  test.todo('should project on sclar type [number]');
-  test.todo('should project on sclar type [boolean]');
+  test.todo('should project on scalar type [string]');
+  test.todo('should project on scalar type [number]');
+  test.todo('should project on scalar type [boolean]');
   test.todo('should project on list');
   test.todo('should project on list element');
   test.todo('should project on set');
@@ -2211,7 +2093,7 @@ describe('The query method [consistent-read]', () => {
   test.todo('should not perform a consistent read if false');
 });
 
-describe('The suery method [combinations]', () => {
+describe('The query method [combinations]', () => {
   test.todo('should combine keys and paginate');
   test.todo('should combine paginate and filter');
   test.todo('should combine projection and keys');

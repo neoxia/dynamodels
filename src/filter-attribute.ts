@@ -1,13 +1,11 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import ConditionAttribute from './condition-attribute';
 import { FilterValue, FilterCondition } from './filter-conditions';
 import { KeyValue } from './base-model';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 interface IAttributesValues {
   id: string;
   attr: Map<string, string>;
-  values: Map<string, string>;
+  values: Map<string, string | null>;
 }
 
 export default class FilterAttribute extends ConditionAttribute<FilterValue> {
@@ -65,7 +63,7 @@ export default class FilterAttribute extends ConditionAttribute<FilterValue> {
 
   private prepareAttributesAndValues(): IAttributesValues {
     const { id, attr } = this.prepareAttributes();
-    const values: Map<string, string> = new Map();
+    const values: Map<string, string | null> = new Map();
     values.set(':null', null);
     return { id, attr, values };
   }

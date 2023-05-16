@@ -1,7 +1,5 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import documentClient, { CommonFields } from './common';
 import Model from '../../src/base-model';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 type NumericalKeyEntity = CommonFields & {
   hashkey: number;

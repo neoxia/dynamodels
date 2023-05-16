@@ -1,9 +1,6 @@
-/* eslint-env node, jest */
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
 import HashKeyJoiModel from './models/hashkey-joi';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe('The save method', () => {
   beforeEach(async () => {
@@ -31,7 +28,7 @@ describe('The save method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('No item to save')).toBe(true);
+      expect((e as Error).message.includes('No item to save')).toBe(true);
     }
   });
   test('should throw an error if a Joi schema is specified and validation failed', async () => {
@@ -49,7 +46,7 @@ describe('The save method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Validation error')).toBe(true);
+      expect((e as Error).message.includes('Validation error')).toBe(true);
     }
   });
   test('should not throw an error if a Joi schema is specified and validation succeed', async () => {
@@ -105,7 +102,7 @@ describe('The save method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Validation error')).toBe(true);
+      expect((e as Error).message.includes('Validation error')).toBe(true);
     }
   });
   test('should not throw an error if a Joi schema is specified and validation succeed', async () => {

@@ -1,21 +1,25 @@
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
-export default new DocumentClient({
-  region: 'localhost',
-  endpoint: `http://localhost:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
-});
+export default DynamoDBDocumentClient.from(
+  new DynamoDBClient({
+    region: 'local',
+    endpoint: `http://127.0.0.1:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
+  }),
+  { marshallOptions: { removeUndefinedValues: true } },
+);
 
-export interface CommonFields {
-  number: number;
-  bool: boolean;
-  string: string;
-  stringset: string[];
-  list: Array<number | string>;
-  stringmap: { [key: string]: string };
-  optionalNumber?: number;
-  optionalBool?: boolean;
-  optionalString?: string;
-  optionalStringset?: string[];
-  optionalList?: Array<number | string>;
-  optionalStringmap?: { [key: string]: string };
-}
+export type CommonFields = {
+  number: number | null;
+  bool: boolean | null;
+  string: string | null;
+  stringset: string[] | null;
+  list: Array<number | string> | null;
+  stringmap: { [key: string]: string } | null;
+  optionalNumber?: number | undefined;
+  optionalBool?: boolean | undefined;
+  optionalString?: string | undefined;
+  optionalStringset?: string[] | undefined;
+  optionalList?: Array<number | string> | undefined;
+  optionalStringmap?: { [key: string]: string } | undefined;
+};

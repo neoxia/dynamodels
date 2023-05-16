@@ -1,35 +1,39 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-
 import { IFilterConditions, buildFilterConditions } from './build-keys';
 import { FilterCondition } from './filter-conditions';
 import paginate, { IPaginationOptions } from './paginate';
 import { IBuiltConditions } from './conditions';
 import PaginationMode from './paginate-mode';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import {
+  DynamoDBDocumentClient,
+  QueryCommandInput,
+  QueryCommandOutput,
+  ScanCommandInput,
+  ScanCommandOutput,
+} from '@aws-sdk/lib-dynamodb';
+import { KeyValue } from './base-model';
 
 export interface IPaginatedResult<T> {
   items: T[];
   nextPage: IPaginationOptions;
-  count: number;
+  count: number | undefined;
 }
 
 export type PageReceivedHook<T> = (page: IPaginatedResult<T>) => void;
 
-export default abstract class Operation<T> {
-  protected documentClient: DocumentClient;
+export default abstract class Operation<T extends Record<string, unknown>> {
+  protected documentClient: DynamoDBDocumentClient;
 
-  protected params: DocumentClient.QueryInput | DocumentClient.ScanInput;
+  protected params: QueryCommandInput | ScanCommandInput;
 
-  protected page: IPaginationOptions;
+  protected page: IPaginationOptions | undefined;
 
   private readonly pk: string;
 
-  private readonly sk: string;
+  private readonly sk: string | undefined;
 
-  constructor(
-    documentClient: DocumentClient,
-    params: DocumentClient.QueryInput | DocumentClient.ScanInput,
+  protected constructor(
+    documentClient: DynamoDBDocumentClient,
+    params: QueryCommandInput | ScanCommandInput,
     pk: string,
     sk?: string,
   ) {
@@ -48,7 +52,7 @@ export default abstract class Operation<T> {
    * helper to perform something than an equal.
    * @returns The filtered query/scan
    */
-  public abstract filter(filterConditions: IFilterConditions): Operation<T>;
+  abstract filter(filterConditions: IFilterConditions): Operation<T>;
 
   /**
    * Apply filters to the scan/query operation
@@ -56,9 +60,9 @@ export default abstract class Operation<T> {
    * or(), and(), not() and operator helpers calls.
    * @returns The filtered query/scan
    */
-  public abstract filter(filterConditions: FilterCondition): Operation<T>;
+  abstract filter(filterConditions: FilterCondition): Operation<T>;
 
-  public abstract filter(filterConditions: IFilterConditions | FilterCondition): Operation<T>;
+  abstract filter(filterConditions: IFilterConditions | FilterCondition): Operation<T>;
 
   protected doFilter(filterConditions: IFilterConditions | FilterCondition): void {
     let builtConditions: IBuiltConditions;
@@ -77,20 +81,20 @@ export default abstract class Operation<T> {
    * @param limit the number of element to return
    * @returns the modified query/scan operation
    */
-  public abstract limit(limit: number): Operation<T>;
+  abstract limit(limit: number): Operation<T>;
 
   protected doLimit(limit: number): void {
     const isValid = Number.isInteger(Number(limit));
-    this.params.Limit = isValid ? Number(limit) : null;
+    this.params.Limit = isValid ? Number(limit) : undefined;
   }
 
   /**
    * Make the scan/query operation read-consistent
-   * @param isConsistent (Optional) whether or not the operation should
+   * @param isConsistent (Optional) regardless of whether the operation should
    * be read-consistent. true if omitted.
    * The modified query/scan operation
    */
-  public abstract consistent(isConsistent?: boolean): Operation<T>;
+  abstract consistent(isConsistent?: boolean): Operation<T>;
 
   protected doConsistent(isConsistent?: boolean): void {
     this.params.ConsistentRead = isConsistent == null ? true : isConsistent;
@@ -101,7 +105,7 @@ export default abstract class Operation<T> {
    * @param options The size of the page and the exclusive start key
    * @returns The paginate query
    */
-  public abstract paginate(options: IPaginationOptions): Operation<T>;
+  abstract paginate(options: IPaginationOptions): Operation<T>;
 
   protected doPaginate(options: IPaginationOptions): void {
     this.page = options ? { ...options } : { size: 100 };
@@ -113,7 +117,7 @@ export default abstract class Operation<T> {
     }
   }
 
-  public projection(
+  projection(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
   ): Operation<T> {
     this.doProject(fields);
@@ -123,7 +127,7 @@ export default abstract class Operation<T> {
   protected doProject(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
   ): void {
-    const attributes: DocumentClient.ExpressionAttributeNameMap = {};
+    const attributes: Record<string, unknown> = {};
     const expression = fields.map((f) => {
       if (typeof f === 'string') {
         attributes[`#${f}`] = f;
@@ -145,9 +149,7 @@ export default abstract class Operation<T> {
     this.addExpressionAttributes(attributes, 'names');
   }
 
-  protected buildResponse(
-    result: DocumentClient.QueryOutput | DocumentClient.ScanOutput,
-  ): IPaginatedResult<T> {
+  protected buildResponse(result: QueryCommandOutput | ScanCommandOutput): IPaginatedResult<T> {
     return {
       items: result.Items as T[],
       count: result.Count,
@@ -158,24 +160,18 @@ export default abstract class Operation<T> {
     };
   }
 
-  protected addExpressionAttributes(
-    attributes:
-      | DocumentClient.ExpressionAttributeNameMap
-      | DocumentClient.ExpressionAttributeValueMap,
-    type: 'names' | 'values',
-  ) {
+  protected addExpressionAttributes(attributes: Record<string, unknown>, type: 'names' | 'values') {
     if (Object.keys(attributes).length > 0) {
       const key = type === 'names' ? 'ExpressionAttributeNames' : 'ExpressionAttributeValues';
-      if (!this.params[key]) {
-        this.params[key] = {};
-      }
-      Object.assign(this.params[key], attributes);
+      const map: Record<string, string> = this.params[key] ?? {};
+      Object.assign(map, attributes);
+      this.params[key] = map;
     }
   }
 
-  protected abstract async doExec(): Promise<IPaginatedResult<T>>;
+  protected abstract doExec(): Promise<IPaginatedResult<T>>;
 
-  public async exec(): Promise<IPaginatedResult<T>> {
+  async exec(): Promise<IPaginatedResult<T>> {
     if (!this.page || this.page.mode === PaginationMode.NATIVE) {
       return this.doExec();
     }
@@ -192,15 +188,15 @@ export default abstract class Operation<T> {
       const result = await this.doExec();
       items.push(...result.items);
       lastKey = result.nextPage.lastEvaluatedKey;
-      count += result.count;
+      count += result.count ?? 0;
     } while (lastKey != null && items.length < size);
-    let lastEvaluatedKey = lastKey;
+    let lastEvaluatedKey: Record<string, KeyValue> | undefined = lastKey;
     if (items.length > size && items[size - 1]) {
-      const lastEvaluatedItem = items[size - 1] as any;
+      const lastEvaluatedItem: T = items[size - 1];
       lastEvaluatedKey = {};
-      lastEvaluatedKey[this.pk] = lastEvaluatedItem[this.pk];
+      lastEvaluatedKey[this.pk] = lastEvaluatedItem[this.pk] as KeyValue;
       if (this.sk) {
-        lastEvaluatedKey[this.sk] = lastEvaluatedItem[this.sk];
+        lastEvaluatedKey[this.sk] = lastEvaluatedItem[this.sk] as KeyValue;
       }
     }
     return {
@@ -218,13 +214,12 @@ export default abstract class Operation<T> {
    * By iteratively fetching next 1MB page of results until last evaluated key is null
    * @returns All the results
    */
-  public async execAll(onPageReceived?: PageReceivedHook<T>): Promise<T[]> {
-    let lastKey = null;
+  async execAll(onPageReceived?: PageReceivedHook<T>): Promise<T[]> {
+    let lastKey = undefined;
     const items = [];
     do {
       this.params.ExclusiveStartKey = lastKey;
       // Necessary to have lastEvaluatedKey
-      /* eslint-disable-next-line no-await-in-loop */
       const page = await this.doExec();
       items.push(...page.items);
       lastKey = page.nextPage.lastEvaluatedKey;
@@ -241,19 +236,18 @@ export default abstract class Operation<T> {
    * after the filters are applied.
    * @returns the operation count
    */
-  public async count(): Promise<number> {
-    let lastKey = null;
+  async count(): Promise<number> {
+    let lastKey = undefined;
     let count = 0;
     this.params.Select = 'COUNT';
     do {
       this.params.ExclusiveStartKey = lastKey;
       // Necessary to have lastEvaluatedKey
-      /* eslint-disable-next-line no-await-in-loop */
       const result = await this.doExec();
-      count += result.count;
+      count += result.count ?? 0;
       lastKey = result.nextPage.lastEvaluatedKey;
     } while (lastKey != null);
-    this.params.Select = null;
+    this.params.Select = undefined;
     return count;
   }
 
@@ -261,13 +255,13 @@ export default abstract class Operation<T> {
    * Execute the query and return the first result matching the query criteria
    * @returns the first matching element
    */
-  public async first(): Promise<T> {
+  async first(): Promise<T> {
     this.params.Limit = 1;
     const result = await this.doExec();
     return result.items[0];
   }
 
-  public getParams(): DocumentClient.ScanInput | DocumentClient.QueryInput {
+  getParams(): ScanCommandInput | QueryCommandInput {
     return this.params;
   }
 }
