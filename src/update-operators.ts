@@ -1,12 +1,8 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-/* eslint-enable import/no-unresolved,no-unused-vars */
-
 export type UpdateOperators = 'ADD' | 'PUT' | 'DELETE';
 
 interface IUpdateAction {
   action: UpdateOperators;
-  value: any;
+  value: unknown;
 }
 
 export interface IUpdateActions {
@@ -15,10 +11,10 @@ export interface IUpdateActions {
 
 export const buildUpdateActions = (
   updateActions: IUpdateActions,
-): DocumentClient.AttributeUpdates => {
-  const actions = {};
+): Record<string, { Action: 'ADD' | 'PUT' | 'DELETE'; Value: unknown }> => {
+  const actions: Record<string, { Action: 'ADD' | 'PUT' | 'DELETE'; Value: unknown }> = {};
   Object.keys(updateActions).forEach((field) => {
-    (actions as any)[field] = {
+    actions[field] = {
       Action: updateActions[field].action,
       Value: updateActions[field].value,
     };
@@ -26,11 +22,11 @@ export const buildUpdateActions = (
   return actions;
 };
 
-const op = (operator: UpdateOperators, value?: any): IUpdateAction => ({
+const op = (operator: UpdateOperators, value?: unknown): IUpdateAction => ({
   action: operator,
   value,
 });
 
-export const add = (value: any): IUpdateAction => op('ADD', value);
-export const put = (value: any): IUpdateAction => op('PUT', value);
+export const add = (value: unknown): IUpdateAction => op('ADD', value);
+export const put = (value: unknown): IUpdateAction => op('PUT', value);
 export const remove = (): IUpdateAction => op('DELETE');

@@ -16,7 +16,7 @@ We currently don't have templates for issues and PR.
 
 Yet, please respect the following structure for your bug/feature requests tickets:
 
-1. Provide dynamodel version
+1. Provide dynamodels version
 2. Add label `bug` for a bug report, `enhancement` for a feature request
 3. Describe current behavior
 4. Describe expected behavior
@@ -26,13 +26,13 @@ Yet, please respect the following structure for your bug/feature requests ticket
 
 We'll be glad to merge your contributions in the master branch of this repository
 
-We would like to provide a cutting-edge DynamoDB library that respects the most recent best pratices
+We would like to provide a cutting-edge DynamoDB library that respects the most recent best practices
 
 Here are the requirements for your pull requests:
 
 1. Please provide exhaustive tests for your fix/feature. Test-driven development is preferred
 2. Lint and prettify your code using the most recent eslint and prettier configurations
 3. For a new feature, update documentation to explain how to use it
-4. This project use semantic-release, so coventional commit messages are mandatory
+4. This project use semantic-release, so conventional commit messages are mandatory
 5. Breaking changes must be explicitly mentioned in related commit messages
 6. All test must pass on your branch

@@ -1,8 +1,6 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import { v4 as uuid } from 'uuid';
 import Condition from './conditions';
 import { KeyValue } from './base-model';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 type IArgs<T> = [string, Map<string, string>, Map<string, T>];
 
@@ -77,14 +75,14 @@ export default abstract class ConditionAttribute<T> {
     const attr: Map<string, string> = new Map();
     const values: Map<string, T> = new Map();
     attr.set(`#${id}`, this.field);
-    values.set(`:${id}lower`, (lower as any) as T);
-    values.set(`:${id}upper`, (upper as any) as T);
+    values.set(`:${id}lower`, lower as T);
+    values.set(`:${id}upper`, upper as T);
     return [`#${id} BETWEEN :${id}lower AND :${id}upper`, attr, values];
   }
 
   protected prepareBeginsWith(value: string): IArgs<T> {
     const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, (value as any) as T);
+    const { attr, values } = this.fillMaps(id, value as T);
     return [`begins_with(#${id}, :${id})`, attr, values];
   }
 }

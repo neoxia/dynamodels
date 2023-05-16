@@ -1,12 +1,8 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-
 import { KeyValue } from './base-model';
 import { IFilterCondition, IKeyCondition } from './operators';
 import { IBuiltConditions } from './conditions';
 import { FilterValue, IFilterConditionOperators, attr } from './filter-conditions';
 import { IKeyConditionsOperators } from './key-conditions';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 type IConditions = IKeyConditions | IFilterConditions;
 
@@ -26,49 +22,31 @@ const operatorToExpression = (
 ): IBuiltConditions => {
   switch (operator) {
     case 'NE':
-      return attr(field)
-        .neq(values[0])
-        .build();
+      return attr(field).neq(values[0]).build();
     case 'IN':
       return attr(field)
         .in(...values)
         .build();
     case 'LE':
-      return attr(field)
-        .le(values[0])
-        .build();
+      return attr(field).le(values[0]).build();
     case 'LT':
-      return attr(field)
-        .lt(values[0])
-        .build();
+      return attr(field).lt(values[0]).build();
     case 'GE':
-      return attr(field)
-        .ge(values[0])
-        .build();
+      return attr(field).ge(values[0]).build();
     case 'GT':
-      return attr(field)
-        .gt(values[0])
-        .build();
+      return attr(field).gt(values[0]).build();
     case 'BETWEEN':
       return attr(field)
         .between(values[0] as KeyValue, values[1] as KeyValue)
         .build();
     case 'NOT_NULL':
-      return attr(field)
-        .notNull()
-        .build();
+      return attr(field).notNull().build();
     case 'NULL':
-      return attr(field)
-        .null()
-        .build();
+      return attr(field).null().build();
     case 'EXISTS':
-      return attr(field)
-        .exists()
-        .build();
+      return attr(field).exists().build();
     case 'NOT_EXISTS':
-      return attr(field)
-        .notExists()
-        .build();
+      return attr(field).notExists().build();
     case 'CONTAINS':
       return attr(field)
         .contains(values[0] as string)
@@ -82,9 +60,7 @@ const operatorToExpression = (
         .beginsWith(values[0] as string)
         .build();
     default:
-      return attr(field)
-        .eq(values[0])
-        .build();
+      return attr(field).eq(values[0]).build();
   }
 };
 
@@ -94,8 +70,8 @@ const isComplexCondition = (
   typeof condition === 'object' && (condition as ICondition).values !== undefined;
 
 const buildConditions = (keyConditions: IConditions): IBuiltConditions => {
-  const attributes: DocumentClient.ExpressionAttributeNameMap = {};
-  const values: DocumentClient.ExpressionAttributeValueMap = {};
+  const attributes: Record<string, unknown> = {};
+  const values: Record<string, unknown> = {};
   const expressions: string[] = [];
   Object.keys(keyConditions).forEach((field) => {
     if (isComplexCondition(keyConditions[field])) {

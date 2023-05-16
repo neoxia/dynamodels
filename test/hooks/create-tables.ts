@@ -1,44 +1,40 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DynamoDB } from 'aws-sdk';
 import compositeTable from '../tables/composite-key';
 import hashTable from '../tables/hash-key';
 import numericalTable from '../tables/numerical-keys';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import {
+  CreateTableCommand,
+  CreateTableCommandInput,
+  DeleteTableCommand,
+  DynamoDBClient,
+} from '@aws-sdk/client-dynamodb';
 
-const tables: any = {
+const tables: Record<string, CreateTableCommandInput> = {
   hashTable,
   compositeTable,
   numericalTable,
 };
 
-const dynamodb = new DynamoDB({
-  region: 'localhost',
-  endpoint: `http://localhost:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
+const dynamodb = new DynamoDBClient({
+  region: 'local',
+  endpoint: `http://127.0.0.1:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
 });
 
 export const deleteTables = async () =>
   Promise.all(
     Object.keys(tables).map((tableName: string) =>
-      dynamodb
-        .deleteTable({
-          TableName: tables[tableName].TableName,
-        })
-        .promise(),
+      dynamodb.send(new DeleteTableCommand({ TableName: tables[tableName].TableName })),
     ),
   );
 
 export const createTables = async () =>
   Promise.all(
     Object.keys(tables).map((tableName: string) =>
-      dynamodb
-        .createTable(tables[tableName])
-        .promise()
-        .catch((err) => {
-          if (err.message === 'Cannot create preexisting table') {
-            return;
-          }
-          throw err;
-        }),
+      dynamodb.send(new CreateTableCommand(tables[tableName])).catch((err) => {
+        if (err.message === 'Cannot create preexisting table') {
+          return;
+        }
+        throw err;
+      }),
     ),
   );
 

@@ -1,34 +1,45 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-
 import { IKeyConditions, buildKeyConditions, IFilterConditions } from './build-keys';
 import { IBuiltConditions } from './conditions';
 import { KeyCondition } from './key-conditions';
 import Operation, { IPaginatedResult } from './operation';
 import { FilterCondition } from './filter-conditions';
 import { IPaginationOptions } from './paginate';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  QueryCommandInput,
+  ScanCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 
-const isFuild = (keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition =>
+const isFluid = (keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition =>
   keyConditions instanceof KeyCondition;
 
-export default class Query<T> extends Operation<T> {
-  protected params: DocumentClient.QueryInput;
+export default class Query<T extends Record<string, unknown>> extends Operation<T> {
+  protected params: QueryCommandInput;
 
+  constructor(
+    documentClient: DynamoDBDocumentClient,
+    params: QueryCommandInput | ScanCommandInput,
+    pk: string,
+    sk?: string,
+  ) {
+    super(documentClient, params, pk, sk);
+    this.params = params;
+  }
   /**
    * Apply key condition to the query.
-   * Only "equal" operator can be used for hashkey
+   * Only "equal" operator can be used for hashKey
    * If table has a composite key, other condition on range key can also be applied using and()
    *  helper method.
-   * (e.g. query().keys(key('hashkey').eq('foo').and(key('rangekey').beginsWith('bar'))))
+   * (e.g. query().keys(key('hashKey').eq('foo').and(key('rangeKey').beginsWith('bar'))))
    * @param keyConditions : Key condition as an object of field => target value or
    * field => { target_value, operator } OR Key condition obtained by chaining key(),
-   * and() and key oeprators method helpers
+   * and() and key operators method helpers
    * eq(), le(), lt(), ge(), gt() and beginsWith()
    */
   public keys(keyConditions: IKeyConditions | KeyCondition): Query<T> {
     let builtConditions: IBuiltConditions;
-    if (isFuild(keyConditions)) {
+    if (isFluid(keyConditions)) {
       builtConditions = keyConditions.build();
     } else {
       builtConditions = buildKeyConditions(keyConditions);
@@ -40,8 +51,8 @@ export default class Query<T> extends Operation<T> {
   }
 
   /**
-   * Perofrm query using a specified index
-   * @param name : the name of the index to use
+   * Performs query using a specified index
+   * @param name: the name of the index to use
    */
   public index(name: string): Query<T> {
     this.params.IndexName = name;
@@ -81,7 +92,7 @@ export default class Query<T> extends Operation<T> {
   }
 
   public async doExec(): Promise<IPaginatedResult<T>> {
-    const result = await this.documentClient.query(this.params).promise();
+    const result = await this.documentClient.send(new QueryCommand(this.params));
     return this.buildResponse(result);
   }
 }

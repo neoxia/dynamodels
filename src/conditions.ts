@@ -1,11 +1,7 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-/* eslint-enable import/no-unresolved,no-unused-vars */
-
 export interface IBuiltConditions {
-  expression: string;
-  attributes: DocumentClient.ExpressionAttributeNameMap;
-  values: DocumentClient.ExpressionAttributeValueMap;
+  expression?: string;
+  attributes: Record<string, unknown>;
+  values: Record<string, unknown>;
 }
 
 export default abstract class Condition<T> {
@@ -41,8 +37,8 @@ export default abstract class Condition<T> {
   }
 
   public build(): IBuiltConditions {
-    const attributes: DocumentClient.ExpressionAttributeNameMap = {};
-    const values: DocumentClient.ExpressionAttributeValueMap = {};
+    const attributes: Record<string, unknown> = {};
+    const values: Record<string, unknown> = {};
     this.attributes.forEach((value, key) => {
       attributes[key] = value;
     });

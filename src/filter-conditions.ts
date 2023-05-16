@@ -1,9 +1,7 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import Condition from './conditions';
 import FilterAttribute from './filter-attribute';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
-export type FilterValue = string | number | boolean | Buffer;
+export type FilterValue = string | number | boolean | Buffer | null;
 
 export type IFilterConditionOperators =
   | 'EQ'

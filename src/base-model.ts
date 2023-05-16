@@ -1,95 +1,121 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { ObjectSchema } from '@hapi/joi';
-import { AWSError } from 'aws-sdk';
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { PromiseResult } from 'aws-sdk/lib/request';
+import { ObjectSchema } from 'joi';
+import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import {
+  BatchGetCommand,
+  BatchGetCommandInput,
+  DeleteCommand,
+  DeleteCommandInput,
+  DeleteCommandOutput,
+  DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
+  PutCommand,
+  QueryCommandInput,
+  ScanCommandInput,
+  TranslateConfig,
+  UpdateCommand,
+  UpdateCommandInput,
+  UpdateCommandOutput,
+} from '@aws-sdk/lib-dynamodb';
 import Query from './query';
 import Scan from './scan';
 import { IUpdateActions, buildUpdateActions } from './update-operators';
 import ValidationError from './validation-error';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
 
-export type KeyValue = string | number | Buffer;
+export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
 type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
-
-/* eslint-disable camelcase */
-
-const isKey = (key: KeyValue | Object): key is KeyValue =>
-  typeof key !== 'object' || key.constructor === Buffer;
+const isKey = (key: KeyValue | Record<string, unknown>): key is KeyValue =>
+  typeof key !== 'object' || key?.constructor === Buffer;
 
 const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
-  (hashKeys_compositeKeys[0] as any).pk !== undefined;
+  (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
 
-export default abstract class Model<T> {
-  protected tableName: string;
+export default abstract class Model<T extends Record<string, unknown>> {
+  protected tableName: string | undefined;
 
-  protected item: T;
+  protected item: T | undefined;
 
-  protected pk: string;
+  protected pk: string | undefined;
 
-  protected sk: string;
+  protected sk: string | undefined;
 
-  protected documentClient: DocumentClient;
+  protected documentClient: DynamoDBDocumentClient;
 
-  protected schema: ObjectSchema;
+  protected schema: ObjectSchema | undefined;
 
-  constructor(item?: T) {
+  constructor(item?: T, options?: DynamoDBClientConfig, translateConfig?: TranslateConfig) {
     this.item = item;
-    if (!this.documentClient) {
-      this.documentClient = new DocumentClient();
-    }
+    const client = new DynamoDBClient(options ?? { region: process.env.AWS_REGION });
+    this.documentClient = DynamoDBDocumentClient.from(
+      client,
+      translateConfig ?? {
+        marshallOptions: { removeUndefinedValues: true },
+      },
+    );
   }
 
   public setItem(item: T): void {
     this.item = item;
   }
 
-  public getItem(): T {
+  public getItem(): T | undefined {
     return this.item;
   }
 
   /**
-   * Create the item hold by the class. Prevent overwritting of an existing
+   * Create the item hold by the class. Prevent overwriting of an existing
    * item with the same key(s).
    * @param options Additional options supported by AWS document client put operation.
    */
-  public async create(options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+  async create(options?: Partial<PutCommandInput>): Promise<T>;
 
   /**
-   * Create an item. Prevent overwritting of an existing item with the same key(s).
+   * Create an item. Prevent overwriting of an existing item with the same key(s).
    * @param item The item to create
    * @param options Additional options supported by AWS document client put operation.
    */
-  public async create(item: T, options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+  async create(item: T, options?: Partial<PutCommandInput>): Promise<T>;
 
-  public async create(
-    item_options?: T | Partial<DocumentClient.PutItemInput>,
-    options?: Partial<DocumentClient.PutItemInput>,
+  async create(
+    item_options?: T | Partial<PutCommandInput>,
+    options?: Partial<PutCommandInput>,
   ): Promise<T> {
     // Handle typescript method overloading
-    const toCreate: T =
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    const toCreate: T | undefined =
       item_options != null && this.isItem(item_options) ? item_options : this.item;
-    const putOptions: Partial<DocumentClient.PutItemInput> =
+    if (!toCreate) {
+      throw new Error(
+        'No item to create, either pass it in Model.prototype.constructor or Model.prototype.create',
+      );
+    }
+    const putOptions: Partial<PutCommandInput> | undefined =
       item_options != null && this.isItem(item_options) ? options : item_options;
     // Extract keys
-    const pk = (toCreate as any)[this.pk];
-    const sk = this.sk != null ? (toCreate as any)[this.sk] : null;
-    // Prevent overwritting of existing item
+    const pk = toCreate[this.pk] as KeyValue;
+    const sk: KeyValue | undefined = this.sk != null ? (toCreate[this.sk] as KeyValue) : undefined;
+    // Prevent overwriting of existing item
     if (await this.exists(pk, sk)) {
       const error = new Error(
-        `Item (hashkey=${pk}${sk != null ? `, rangekey= ${sk}` : ''}) already exists`,
+        `Item (hashKey=${pk}${sk != null ? `, rangeKey= ${sk}` : ''}) already exists`,
       );
-      error.name = 'EALREADYEXISTS';
+      error.name = 'E_ALREADY_EXISTS';
       throw error;
     }
     // Save item
     return this.save(toCreate, putOptions);
   }
 
-  private isItem(item: T | any): item is T {
-    return item[this.pk] !== undefined;
+  private isItem(item: T | unknown): item is T {
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    return (item as T)[this.pk] !== undefined;
   }
 
   /**
@@ -97,26 +123,29 @@ export default abstract class Model<T> {
    * if it exists.
    * @param options Additional options supported by AWS document client put operation.
    */
-  public async save(options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+  async save(options?: Partial<PutCommandInput>): Promise<T>;
 
   /**
    * Save an item. Overwrite of an existing item with the same key(s) if it exists.
    * @param item The item to save
    * @param options Additional options supported by AWS document client put operation.
    */
-  public async save(item: T, options?: Partial<DocumentClient.PutItemInput>): Promise<T>;
+  async save(item: T, options?: Partial<PutCommandInput>): Promise<T>;
 
-  public async save(
-    item_options?: T | Partial<DocumentClient.PutItemInput>,
-    options?: Partial<DocumentClient.PutItemInput>,
+  async save(
+    item_options?: T | Partial<PutCommandInput>,
+    options?: Partial<PutCommandInput>,
   ): Promise<T> {
     // Handle typescript method overloading
-    const toSave: T = item_options != null && this.isItem(item_options) ? item_options : this.item;
-    const putOptions: Partial<DocumentClient.PutItemInput> =
+    const toSave: T | undefined =
+      item_options != null && this.isItem(item_options) ? item_options : this.item;
+    const putOptions: Partial<PutCommandInput> | undefined =
       item_options != null && this.isItem(item_options) ? options : item_options;
     // Validate item to put
     if (!toSave) {
-      throw Error('No item to save');
+      throw new Error(
+        'No item to save, either pass it in Model.prototype.constructor or Model.prototype.save',
+      );
     }
     if (this.schema) {
       const { error } = this.schema.validate(toSave);
@@ -125,7 +154,7 @@ export default abstract class Model<T> {
       }
     }
     // Prepare putItem operation
-    const params: DocumentClient.PutItemInput = {
+    const params: PutCommandInput = {
       TableName: this.tableName,
       Item: toSave,
     };
@@ -134,42 +163,38 @@ export default abstract class Model<T> {
       Object.assign(params, putOptions);
     }
     // Perform putItem operation
-    await this.documentClient.put(params).promise();
+    await this.documentClient.send(new PutCommand(params));
     return toSave;
   }
 
   /**
    * Get a single item by hash key
-   * @param pk : The hash key value
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: hash key value
+   * @param options: Additional options supported by AWS document client.
    * @returns The matching item
    */
-  public async get(pk: KeyValue, options?: Partial<DocumentClient.GetItemInput>): Promise<T>;
+  async get(pk: KeyValue, options?: Partial<GetCommandInput>): Promise<T>;
 
   /**
    * Get a single item by hash key and range key
-   * @param pk : The hash key value
-   * @param sk  : The range key value, if the table has a composite key
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: The hash key value
+   * @param sk: The range key value, if the table has a composite key
+   * @param options: Additional options supported by AWS document client.
    * @returns The matching item
    */
-  public async get(
-    pk: KeyValue,
-    sk: KeyValue,
-    options?: Partial<DocumentClient.GetItemInput>,
-  ): Promise<T>;
+  async get(pk: KeyValue, sk: KeyValue, options?: Partial<GetCommandInput>): Promise<T>;
 
-  public async get(
-    pk: any,
-    sk_options?: Partial<DocumentClient.GetItemInput> | KeyValue,
-    options?: Partial<DocumentClient.GetItemInput>,
-  ): Promise<T> {
+  async get(
+    pk: KeyValue,
+    sk_options?: Partial<GetCommandInput> | KeyValue,
+    options?: Partial<GetCommandInput>,
+  ): Promise<T | null> {
     // Handle method overloading
     const sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
     const getOptions = Model.getOptions(sk_options, options);
     // Prepare getItem operation
     this.testKeys(pk, sk);
-    const params: DocumentClient.GetItemInput = {
+    const params: GetCommandInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
     };
@@ -177,119 +202,113 @@ export default abstract class Model<T> {
     if (options) {
       Object.assign(params, getOptions);
     }
-    const result = await this.documentClient.get(params).promise();
+    const result = await this.documentClient.send(new GetCommand(params));
     if (result && result.Item) {
       return result.Item as T;
     }
     return null;
   }
 
-  private testKeys(pk: KeyValue, sk?: KeyValue) {
+  private testKeys(pk: KeyValue | undefined, sk: KeyValue | undefined): { pk: KeyValue, sk?: KeyValue } {
     if (!pk) {
       throw Error(`Missing HashKey ${this.pk}=${pk}`);
     }
     if (this.sk != null && !sk) {
       throw Error(`Missing RangeKey ${this.sk}=${sk}`);
     }
+    return { pk, sk };
   }
 
   /**
    * Check if an item exist by keys
-   * @param pk : The hash key value
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: The hash key value
+   * @param options: Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
-  public async exists(
-    pk: KeyValue,
-    options?: Partial<DocumentClient.GetItemInput>,
-  ): Promise<boolean>;
+  async exists(pk: KeyValue, options?: Partial<GetCommandInput>): Promise<boolean>;
 
   /**
    * Check if an item exist by keys
-   * @param pk : The hash key value
-   * @param sk  : The range key value, if the table has a composite key
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: The hash key value
+   * @param sk: The range key value, if the table has a composite key
+   * @param options: Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
-  public async exists(
-    pk: KeyValue,
-    sk: KeyValue,
-    options?: Partial<DocumentClient.GetItemInput>,
-  ): Promise<boolean>;
+  async exists(pk: KeyValue, sk?: KeyValue, options?: Partial<GetCommandInput>): Promise<boolean>;
 
-  public async exists(
+  async exists(
     pk: KeyValue,
-    sk_options?: any,
-    options?: Partial<DocumentClient.GetItemInput>,
+    sk_options?: Partial<GetCommandInput> | KeyValue,
+    options?: Partial<GetCommandInput>,
   ): Promise<boolean> {
+    // Typescript refuses to pass overloads methods arguments which is dumb IMHO as t is safe
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const req = await this.get(pk, sk_options, options);
     return req != null;
   }
 
   /**
    * Delete a single item by key
-   * @param pk : The hash key value
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: The hash key value
+   * @param options: Additional options supported by AWS document client.
    * @returns  The item as it was before deletion and consumed capacity
    */
-  public async delete(
-    pk: KeyValue,
-    options?: Partial<DocumentClient.DeleteItemInput>,
-  ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
+  async delete(pk: KeyValue, options?: Partial<DeleteCommandInput>): Promise<DeleteCommandOutput>;
 
-  public async delete(
-    item: T,
-    options?: Partial<DocumentClient.DeleteItemInput>,
-  ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
+  async delete(item: T, options?: Partial<DeleteCommandInput>): Promise<DeleteCommandOutput>;
   /**
    * Delete a single item by key
-   * @param pk : The hash key value
-   * @param sk  : The range key value, if the table has a composite key
-   * @param options : Additional options supported by AWS document client.
+   * @param pk: The hash key value
+   * @param sk: The range key value, if the table has a composite key
+   * @param options: Additional options supported by AWS document client.
    * @returns  The item as it was before deletion and consumed capacity
    */
 
-  public async delete(
+  async delete(
     pk: KeyValue,
     sk: KeyValue,
-    options?: Partial<DocumentClient.DeleteItemInput>,
-  ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>>;
+    options?: Partial<DeleteCommandInput>,
+  ): Promise<DeleteCommandOutput>;
 
-  public async delete(
+  async delete(
     pk_item: KeyValue | T,
-    sk_options?: KeyValue | Partial<DocumentClient.DeleteItemInput>,
-    options?: Partial<DocumentClient.DeleteItemInput>,
-  ): Promise<PromiseResult<DocumentClient.DeleteItemOutput, AWSError>> {
+    sk_options?: KeyValue | Partial<DeleteCommandInput>,
+    options?: Partial<DeleteCommandInput>,
+  ): Promise<DeleteCommandOutput> {
     // Handle method overloading
-    if (!pk_item) {
-      throw Error('Missing HashKey');
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
     }
-    const pk = (pk_item as any)[this.pk] != null ? (pk_item as any)[this.pk] : pk_item;
-    const sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
+    const _pk: KeyValue | undefined = isKey(pk_item) ? pk_item : (pk_item ? pk_item[this.pk] as KeyValue : undefined);
+    const _sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
     const deleteOptions = Model.getOptions(sk_options, options);
     // Build delete item params
-    this.testKeys(pk, sk);
+    const { pk, sk } = this.testKeys(_pk, _sk);
     if (!(await this.exists(pk, sk))) {
       throw new Error('Item to delete does not exists');
     }
-    const params: DocumentClient.DeleteItemInput = {
+    const params: DeleteCommandInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
     };
     if (options) {
       Object.assign(params, deleteOptions);
     }
-    return this.documentClient.delete(params).promise();
+    return this.documentClient.send(new DeleteCommand(params));
   }
 
   /**
    * Perform a scan operation on the table
-   * @param options : Additional options supported by AWS document client.
+   * @param options: Additional options supported by AWS document client.
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
-  public scan(options?: Partial<DocumentClient.ScanInput>): Scan<T> {
+  public scan(options?: Partial<ScanCommandInput>): Scan<T> {
     // Building scan parameters
-    const params: DocumentClient.ScanInput = {
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    const params: ScanCommandInput = {
       TableName: this.tableName,
     };
     if (options) {
@@ -303,35 +322,39 @@ export default abstract class Model<T> {
    * Careful ! All the table will be scanned. This might be time-consuming.
    * @returns the number of items in the table
    */
-  public async count(): Promise<number> {
+  async count(): Promise<number> {
     return this.scan().count();
   }
 
+  public query(index?: string): Query<T>;
+
+  public query(options?: Partial<QueryCommandInput>): Query<T>;
+
   /**
-   * Peform a query operation.
+   * Performs a query operation.
+   * @param index The secondary index (LSI or GSI) on which perform query
    * @param options The query options expected by AWS document client.
    * @returns The items matching the keys conditions, in the limit of 1MB,
    * and the last evaluated key.
    */
-  public query(index?: string): Query<T>;
-
-  public query(options?: Partial<DocumentClient.QueryInput>): Query<T>;
-
-  public query(index?: string, options?: Partial<DocumentClient.QueryInput>): Query<T>;
+  public query(index?: string, options?: Partial<QueryCommandInput>): Query<T>;
 
   public query(
-    index_options?: string | Partial<DocumentClient.QueryInput>,
-    options?: Partial<DocumentClient.QueryInput>,
+    index_options?: string | Partial<QueryCommandInput>,
+    options?: Partial<QueryCommandInput>,
   ): Query<T> {
     // Handle overloading
-    const indexName: string =
-      index_options != null && typeof index_options === 'string' ? index_options : null;
-    const queryOptions: Partial<DocumentClient.QueryInput> =
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    const indexName: string | undefined =
+      index_options != null && typeof index_options === 'string' ? index_options : undefined;
+    const queryOptions: Partial<QueryCommandInput> | undefined =
       index_options != null && typeof index_options === 'string'
         ? options
-        : (index_options as Partial<DocumentClient.QueryInput>);
+        : (index_options as Partial<QueryCommandInput>);
     // Building query
-    const params: DocumentClient.QueryInput = {
+    const params: QueryCommandInput = {
       TableName: this.tableName,
     };
     if (indexName) {
@@ -345,15 +368,18 @@ export default abstract class Model<T> {
 
   /**
    * Perform a batch get operation in the limit of 100 items
-   * @param keys : the keys of the items we want to retrieve
-   * @param options : Additional options supported by AWS document client.
+   * @param keys: the keys of the items we want to retrieve
+   * @param options: Additional options supported by AWS document client.
    * @returns the batch get operation result
    */
-  private async getSingleBatch(
-    keys: Keys,
-    options?: Partial<DocumentClient.BatchGetItemInput>,
-  ): Promise<T[]> {
-    let params: DocumentClient.BatchGetItemInput;
+  private async getSingleBatch(keys: Keys, options?: Partial<BatchGetCommandInput>): Promise<T[]> {
+    let params: BatchGetCommandInput;
+    if (!this.tableName) {
+      throw new Error('Table name is not defined on your model');
+    }
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
     if (isComposite(keys)) {
       params = {
         RequestItems: {
@@ -366,7 +392,7 @@ export default abstract class Model<T> {
       params = {
         RequestItems: {
           [this.tableName]: {
-            Keys: keys.map((pk) => ({ [this.pk]: pk })),
+            Keys: keys.map((pk) => ({ [String(this.pk)]: pk })),
           },
         },
       };
@@ -374,32 +400,30 @@ export default abstract class Model<T> {
     if (options) {
       Object.assign(params, options);
     }
-    const result = await this.documentClient.batchGet(params).promise();
-    return result.Responses[this.tableName] as T[];
+    const result = await this.documentClient.send(new BatchGetCommand(params));
+    return result.Responses ? (result.Responses[this.tableName] as T[]) : [];
   }
 
   /**
    * Perform a batch get operation beyond the limit of 100 items.
    * If the is more than 100 items, the keys are automatically split in batch of 100 that
    * are run in parallel.
-   * @param keys : the keys of the items we want to retrieve
-   * @param options : Additional options supported by AWS document client.
+   * @param keys: the keys of the items we want to retrieve
+   * @param options: Additional options supported by AWS document client.
    * @returns all the matching items
    */
-  public async batchGet(
-    keys: Keys,
-    options?: Partial<DocumentClient.BatchGetItemInput>,
-  ): Promise<T[]> {
+  async batchGet(keys: Keys, options?: Partial<BatchGetCommandInput>): Promise<T[]> {
     if (keys.length === 0) {
       return [];
     }
-    const splitBatch = (_keys: any[]) =>
-      _keys.reduce((all, one, idx) => {
-        const chunk = Math.floor(idx / 100);
-        const currentBatches = all;
-        currentBatches[chunk] = [].concat(all[chunk] || [], one);
-        return currentBatches;
+    const splitBatch = <K>(_keys: K[], CHUNK_SIZE = 100): K[][] => {
+      return _keys.reduce((batches: K[][], item: K, idx) => {
+        const chunkIndex = Math.floor(idx / CHUNK_SIZE);
+        if (!batches[chunkIndex]) batches[chunkIndex] = [];
+        batches[chunkIndex].push(item);
+        return batches;
       }, []);
+    };
     if (isComposite(keys)) {
       // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
       const batches = splitBatch(keys);
@@ -420,42 +444,42 @@ export default abstract class Model<T> {
     return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
   }
 
-  public async update(
+  async update(
     pk: KeyValue,
     actions: IUpdateActions,
-    options?: Partial<DocumentClient.UpdateItemInput>,
-  ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
+    options?: Partial<UpdateCommandInput>,
+  ): Promise<UpdateCommandOutput>;
 
-  public async update(
+  async update(
     pk: KeyValue,
     sk: KeyValue,
     actions: IUpdateActions,
-    options?: Partial<DocumentClient.UpdateItemInput>,
-  ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>>;
+    options?: Partial<UpdateCommandInput>,
+  ): Promise<UpdateCommandOutput>;
 
-  public async update(
+  async update(
     pk: KeyValue,
     sk_actions: KeyValue | IUpdateActions,
-    actions_options?: IUpdateActions | Partial<DocumentClient.UpdateItemInput>,
-    options?: Partial<DocumentClient.UpdateItemInput>,
-  ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> {
+    actions_options?: IUpdateActions | Partial<UpdateCommandInput>,
+    options?: Partial<UpdateCommandInput>,
+  ): Promise<UpdateCommandOutput> {
     // Handle overloading
     let sk: KeyValue;
     let updateActions: IUpdateActions;
-    let nativeOptions: Partial<DocumentClient.UpdateItemInput>;
+    let nativeOptions: Partial<UpdateCommandInput> | undefined;
     if (!isKey(sk_actions)) {
       // 1st overload
       sk = null;
       updateActions = sk_actions;
       nativeOptions = actions_options;
     } else {
-      // 2nd iverload
+      // 2nd overload
       sk = sk_actions;
       updateActions = actions_options as IUpdateActions;
       nativeOptions = options;
     }
     this.testKeys(pk, sk);
-    const params: DocumentClient.UpdateItemInput = {
+    const params: UpdateCommandInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
       AttributeUpdates: buildUpdateActions(updateActions),
@@ -463,11 +487,14 @@ export default abstract class Model<T> {
     if (nativeOptions) {
       Object.assign(params, nativeOptions);
     }
-    return this.documentClient.update(params).promise();
+    return this.documentClient.send(new UpdateCommand(params));
   }
 
-  private buildKeys(pk: any, sk?: any): DocumentClient.Key {
-    const keys: DocumentClient.Key = {
+  private buildKeys(pk: unknown, sk?: unknown): Record<string, unknown> {
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    const keys = {
       [this.pk]: pk,
     };
     if (this.sk) {
@@ -477,11 +504,11 @@ export default abstract class Model<T> {
   }
 
   private static getOptions(
-    sk_options: KeyValue | Partial<DocumentClient.GetItemInput>,
-    options: Partial<DocumentClient.GetItemInput>,
-  ): Partial<DocumentClient.GetItemInput> {
+    sk_options: KeyValue | Partial<GetCommandInput> | undefined,
+    options: Partial<GetCommandInput> | undefined,
+  ): Partial<GetCommandInput> | undefined {
     return sk_options != null && isKey(sk_options)
       ? options
-      : (sk_options as Partial<DocumentClient.GetItemInput>);
+      : (sk_options as Partial<GetCommandInput>);
   }
 }

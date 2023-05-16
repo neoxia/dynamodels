@@ -1,9 +1,6 @@
-/* eslint-env node, jest */
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import HashKeyModel from './models/hashkey';
 import CompositeKeyModel from './models/composite-keys';
 import { clearTables } from './hooks/create-tables';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe('The delete method', () => {
   const model = new HashKeyModel();
@@ -40,7 +37,7 @@ describe('The delete method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('not exist')).toBe(true);
+      expect((e as Error).message.includes('not exist')).toBe(true);
     }
   });
   test('should throw an error if hash key is not given', async () => {
@@ -49,7 +46,7 @@ describe('The delete method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Missing HashKey')).toBe(true);
+      expect((e as Error).message.includes('Missing HashKey')).toBe(true);
     }
   });
 });
@@ -83,7 +80,7 @@ describe('The delete method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('not exist')).toBe(true);
+      expect((e as Error).message.includes('not exist')).toBe(true);
     }
   });
   test('should throw an error if hash key is not given', async () => {
@@ -92,7 +89,7 @@ describe('The delete method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Missing HashKey')).toBe(true);
+      expect((e as Error).message.includes('Missing HashKey')).toBe(true);
     }
   });
   test('should throw an error if range key is not given', async () => {
@@ -101,7 +98,7 @@ describe('The delete method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Missing RangeKey')).toBe(true);
+      expect((e as Error).message.includes('Missing RangeKey')).toBe(true);
     }
   });
 });

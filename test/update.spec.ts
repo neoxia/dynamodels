@@ -1,10 +1,7 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import HashKeyModel from './models/hashkey';
 import { clearTables } from './hooks/create-tables';
-import { put, remove } from '../src/update-operators';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import { put, remove } from '../src';
 
-/* eslint-env node, jest */
 describe('The update method', () => {
   const model = new HashKeyModel();
   beforeAll(async () => {
