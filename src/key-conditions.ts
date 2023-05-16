@@ -1,8 +1,6 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import { KeyValue } from './base-model';
 import KeyAttribute from './key-attribute';
 import Condition from './conditions';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 export type IKeyConditionsOperators = 'EQ' | 'LE' | 'LT' | 'GE' | 'GT' | 'BEGINS_WITH' | 'BETWEEN';
 

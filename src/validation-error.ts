@@ -1,6 +1,4 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { ValidationError as JoiValidationError } from '@hapi/joi';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import { ValidationError as JoiValidationError } from 'joi';
 
 export default class ValidationError extends Error {
   details: JoiValidationError;

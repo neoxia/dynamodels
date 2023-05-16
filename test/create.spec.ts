@@ -1,10 +1,7 @@
-/* eslint-env node, jest */
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
 import HashKeyJoiModel from './models/hashkey-joi';
 import CompositeKeyModel from './models/composite-keys';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 describe('The create method', () => {
   beforeEach(async () => {
@@ -28,14 +25,14 @@ describe('The create method', () => {
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
   });
-  test.skip('should throw an error if not item is held by the class', async () => {
+  test('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();
     try {
       await foo.create();
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('No item to save')).toBe(true);
+      expect((e as Error).message.includes('No item to create')).toBe(true);
     }
   });
   test('should throw an error if an item with the same hash key exists', async () => {
@@ -62,7 +59,7 @@ describe('The create method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('already exists')).toBe(true);
+      expect((e as Error).message.includes('already exists')).toBe(true);
     }
   });
   test('should throw an error if a Joi schema is specified and validation failed', async () => {
@@ -81,7 +78,7 @@ describe('The create method', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Validation error')).toBe(true);
+      expect((e as Error).message.includes('Validation error')).toBe(true);
     }
   });
   test('should not throw an error if a Joi schema is specified and validation succeed', async () => {
@@ -139,7 +136,7 @@ describe('The create method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('already exists')).toBe(true);
+      expect((e as Error).message.includes('already exists')).toBe(true);
     }
   });
   test('should throw an error if a Joi schema is specified and validation failed', async () => {
@@ -157,7 +154,7 @@ describe('The create method [1st overload]', () => {
       /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
-      expect(e.message.includes('Validation error')).toBe(true);
+      expect((e as Error).message.includes('Validation error')).toBe(true);
     }
   });
   test('should not throw an error if a Joi schema is specified and validation succeed', async () => {

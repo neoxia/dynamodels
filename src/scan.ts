@@ -1,13 +1,26 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import Operation, { IPaginatedResult } from './operation';
 import { IPaginationOptions } from './paginate';
 import { IFilterConditions } from './build-keys';
 import { FilterCondition } from './filter-conditions';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import {
+  DynamoDBDocumentClient,
+  QueryCommandInput,
+  ScanCommand,
+  ScanCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 
-export default class Scan<T> extends Operation<T> {
-  protected params: DocumentClient.ScanInput;
+export default class Scan<T extends Record<string, unknown>> extends Operation<T> {
+  protected params: ScanCommandInput;
+
+  constructor(
+    documentClient: DynamoDBDocumentClient,
+    params: QueryCommandInput | ScanCommandInput,
+    pk: string,
+    sk?: string,
+  ) {
+    super(documentClient, params, pk, sk);
+    this.params = params;
+  }
 
   public limit(limit: number): Scan<T> {
     this.doLimit(limit);
@@ -34,7 +47,7 @@ export default class Scan<T> extends Operation<T> {
    * @returns Fetched items, and pagination metadata
    */
   public async doExec(): Promise<IPaginatedResult<T>> {
-    const result = await this.documentClient.scan(this.params).promise();
+    const result = await this.documentClient.send(new ScanCommand(this.params));
     return this.buildResponse(result);
   }
 }

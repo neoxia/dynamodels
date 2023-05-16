@@ -1,21 +1,19 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import PaginationMode from './paginate-mode';
 import { KeyValue } from './base-model';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import { QueryCommandInput, ScanCommandInput } from '@aws-sdk/lib-dynamodb';
 
 export interface IPaginationOptions {
   mode?: PaginationMode;
   lastEvaluatedKey?: { [attribute: string]: KeyValue };
-  size: number;
+  size: number | undefined;
 }
 
 const paginate = (options: IPaginationOptions) => {
-  const params: Partial<DocumentClient.ScanInput> | Partial<DocumentClient.QueryInput> = {};
+  const params: Partial<ScanCommandInput> | Partial<QueryCommandInput> = {};
   if (options.lastEvaluatedKey) {
     params.ExclusiveStartKey = options.lastEvaluatedKey;
   } else {
-    params.ExclusiveStartKey = null;
+    params.ExclusiveStartKey = undefined;
   }
   params.Limit = options.size;
   return params;

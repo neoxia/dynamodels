@@ -1,9 +1,7 @@
-/* eslint-disable import/no-unresolved,no-unused-vars,object-curly-newline */
-import { object, string, number, boolean, array, any } from '@hapi/joi';
+import joi from 'joi';
 import Model from '../../src/base-model';
 import documentClient from './common';
 import { HashKeyEntity } from './hashkey';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 export default class HashKeyJoiModel extends Model<HashKeyEntity> {
   protected tableName = 'table_test_hashkey';
@@ -12,15 +10,13 @@ export default class HashKeyJoiModel extends Model<HashKeyEntity> {
 
   protected documentClient = documentClient;
 
-  protected schema = object().keys({
-    hashkey: string().required(),
-    number: number().required(),
-    bool: boolean(),
-    string: string()
-      .email()
-      .required(),
-    stringset: array().items(string()),
-    list: array().items(any()),
-    stringmap: object(),
+  protected schema = joi.object().keys({
+    hashkey: joi.string().required(),
+    number: joi.number().required(),
+    bool: joi.boolean(),
+    string: joi.string().email().required(),
+    stringset: joi.array().items(joi.string()),
+    list: joi.array().items(joi.any()),
+    stringmap: joi.object(),
   });
 }

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unresolved */
 import Model from './base-model';
 import PaginationMode from './paginate-mode';
 

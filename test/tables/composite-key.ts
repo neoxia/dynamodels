@@ -27,7 +27,7 @@ export default {
     ReadCapacityUnits: 5,
     WriteCapacityUnits: 5,
   },
-  TableName: 'table_test_compositekey',
+  TableName: 'table_test_composite_key',
   GlobalSecondaryIndexes: [
     {
       IndexName: 'GS1',

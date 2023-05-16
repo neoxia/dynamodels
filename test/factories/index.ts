@@ -1,7 +1,5 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
-import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import Model from '../../src/base-model';
-/* eslint-enable import/no-unresolved,no-unused-vars */
+import {CommonFields} from "../models/common";
 
 const generateBool = (i: number) => {
   if (i % 3 === 0) {
@@ -10,7 +8,7 @@ const generateBool = (i: number) => {
   return i % 3 === 1 ? false : null;
 };
 
-const generatePartial = (i: number, numericalKeys?: boolean): any => ({
+const generatePartial = (i: number, numericalKeys?: boolean): CommonFields & { rangekey: string | number } => ({
   rangekey: numericalKeys ? i : `rangekey-${i}`,
   number: i % 2 === 0 ? i : null,
   bool: generateBool(i),
@@ -27,34 +25,51 @@ const generatePartial = (i: number, numericalKeys?: boolean): any => ({
 });
 
 const save = async (
-  model: Model<any>,
+  model: Model<Record<string, unknown>>,
   hk: number,
   i: number,
   numericalKeys?: boolean,
-): Promise<Partial<DocumentClient.PutItemInput>> => {
-  const entity = {
+) => {
+  const entity: CommonFields & { rangekey: string | number } & { hashkey: string | number } = {
     hashkey: numericalKeys ? hk : `hashkey-${hk}`,
     ...generatePartial(i, numericalKeys),
   };
   try {
-    const res = await model.save(entity);
-    return res;
+    await model.save(entity);
+    return entity;
   } catch (e) {
-    throw Error(`Could not save entity ${JSON.stringify(entity)}. Reason ${e.message}`);
+    throw Error(`Could not save entity ${JSON.stringify(entity)}. Reason ${(e as Error).message}`);
   }
 };
 
 export default async (
-  model: Model<any>,
+  model: Model<Record<string, unknown>>,
   nbEntries: number,
   numericalKeys?: boolean,
-): Promise<any> => {
-  const promises: Array<Promise<Partial<DocumentClient.PutItemInput>>> = [];
+): Promise<Array<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> => {
+  const promises: Array<Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> = [];
   for (let i = 0; i < Math.floor(nbEntries / 2); i += 1) {
     promises.push(save(model, 1, i, numericalKeys));
   }
   for (let i = Math.floor(nbEntries / 2); i < nbEntries; i += 1) {
     promises.push(save(model, 2, i, numericalKeys));
   }
-  return Promise.all(promises);
+  const results = await Promise.all(promises);
+  return results.map((r) => r);
+};
+
+export const hashOnly = async (
+  model: Model<Record<string, unknown>>,
+  nbEntries: number,
+  numericalKeys?: boolean,
+): Promise<Array<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> => {
+  const promises: Array<Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> = [];
+  for (let i = 0; i < Math.floor(nbEntries / 2); i += 1) {
+    promises.push(save(model, i, i, numericalKeys));
+  }
+  for (let i = Math.floor(nbEntries / 2); i < nbEntries; i += 1) {
+    promises.push(save(model, i, i, numericalKeys));
+  }
+  const results = await Promise.all(promises);
+  return results.map((r) => r);
 };

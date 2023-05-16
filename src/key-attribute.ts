@@ -1,8 +1,6 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import ConditionAttribute from './condition-attribute';
 import { KeyValue } from './base-model';
 import { KeyCondition } from './key-conditions';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 export default class KeyAttribute extends ConditionAttribute<KeyValue> {
   public eq(value: KeyValue): KeyCondition {

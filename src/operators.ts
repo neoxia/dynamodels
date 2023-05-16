@@ -1,41 +1,45 @@
-/* eslint-disable import/no-unresolved,no-unused-vars */
 import { KeyValue } from './base-model';
 import { IFilterConditionOperators, FilterValue } from './filter-conditions';
 import { IKeyConditionsOperators } from './key-conditions';
-/* eslint-enable import/no-unresolved,no-unused-vars */
 
 type ConditionValue = KeyValue | FilterValue;
 
 export interface IFilterCondition {
-  operator?: IFilterConditionOperators;
+  operator: IFilterConditionOperators;
   values: FilterValue[];
 }
 
 export interface IKeyCondition {
-  operator?: IKeyConditionsOperators;
+  operator: IKeyConditionsOperators;
   values: KeyValue[];
 }
 
-const op = (
-  operator: IKeyConditionsOperators | IFilterConditionOperators,
-  values: Array<ConditionValue>,
-) => ({
+const opK = (operator: IKeyConditionsOperators, values: Array<ConditionValue>): IKeyCondition => ({
   operator,
   values,
 });
 
-export const eq = (value: FilterValue): any => op('EQ', [value]);
-export const neq = (value: FilterValue): IFilterCondition => op('NE', [value]);
-export const isIn = (...args: FilterValue[]): IFilterCondition => op('IN', args);
-export const le = (value: KeyValue): any => op('LE', [value]);
-export const lt = (value: KeyValue): any => op('LT', [value]);
-export const ge = (value: KeyValue): any => op('GE', [value]);
-export const gt = (value: KeyValue): any => op('GT', [value]);
-export const between = (lower: KeyValue, upper: KeyValue): any => op('BETWEEN', [lower, upper]);
-export const isNull = (): IFilterCondition => op('NULL', []);
-export const notNull = (): IFilterCondition => op('NOT_NULL', []);
-export const exists = (): IFilterCondition => op('EXISTS', []);
-export const notExists = (): IFilterCondition => op('NOT_EXISTS', []);
-export const contains = (value: string): IFilterCondition => op('CONTAINS', [value]);
-export const notContains = (value: string): IFilterCondition => op('NOT_CONTAINS', [value]);
-export const beginsWith = (value: string | Buffer): any => op('BEGINS_WITH', [value]);
+const opF = (
+  operator: IFilterConditionOperators,
+  values: Array<ConditionValue>,
+): IFilterCondition => ({
+  operator,
+  values,
+});
+
+export const eq = (value: FilterValue): IKeyCondition => opK('EQ', [value]);
+export const neq = (value: FilterValue): IFilterCondition => opF('NE', [value]);
+export const isIn = (...args: FilterValue[]): IFilterCondition => opF('IN', args);
+export const le = (value: KeyValue): IKeyCondition => opK('LE', [value]);
+export const lt = (value: KeyValue): IKeyCondition => opK('LT', [value]);
+export const ge = (value: KeyValue): IKeyCondition => opK('GE', [value]);
+export const gt = (value: KeyValue): IKeyCondition => opK('GT', [value]);
+export const between = (lower: KeyValue, upper: KeyValue): IKeyCondition =>
+  opK('BETWEEN', [lower, upper]);
+export const isNull = (): IFilterCondition => opF('NULL', []);
+export const notNull = (): IFilterCondition => opF('NOT_NULL', []);
+export const exists = (): IFilterCondition => opF('EXISTS', []);
+export const notExists = (): IFilterCondition => opF('NOT_EXISTS', []);
+export const contains = (value: string): IFilterCondition => opF('CONTAINS', [value]);
+export const notContains = (value: string): IFilterCondition => opF('NOT_CONTAINS', [value]);
+export const beginsWith = (value: string | Buffer): IKeyCondition => opK('BEGINS_WITH', [value]);
