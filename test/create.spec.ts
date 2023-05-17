@@ -29,7 +29,6 @@ describe('The create method', () => {
     const foo = new HashKeyModel();
     try {
       await foo.create();
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('No item to create')).toBe(true);
@@ -75,7 +74,6 @@ describe('The create method', () => {
     });
     try {
       await foo.create();
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Validation error')).toBe(true);
@@ -133,7 +131,6 @@ describe('The create method [1st overload]', () => {
     await foo.save(item);
     try {
       await foo.create(item);
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('already exists')).toBe(true);
@@ -151,7 +148,6 @@ describe('The create method [1st overload]', () => {
         bool: true,
         list: ['foo', 42],
       });
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Validation error')).toBe(true);

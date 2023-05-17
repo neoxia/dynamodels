@@ -28,7 +28,6 @@ describe('The exists method', () => {
   test('should throw an error if hash key is not given', async () => {
     try {
       await model.exists(null);
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Missing HashKey')).toBe(true);
@@ -63,7 +62,6 @@ describe('The exists method [1st overload]', () => {
   test('should throw an error if hash key is not given', async () => {
     try {
       await model.exists(null, 'baz');
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Missing HashKey')).toBe(true);
@@ -72,7 +70,6 @@ describe('The exists method [1st overload]', () => {
   test('should throw an error if range key is not given', async () => {
     try {
       await model.exists('foo');
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Missing RangeKey')).toBe(true);
