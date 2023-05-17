@@ -11,7 +11,8 @@
     "lint": "npx eslint '{src,test}**/*'",
     "pre:commit": "npm run prettier && npm run lint",
     "pre:test": "docker run -d -p 8022:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb",
-    "test": "LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
+    "test": "LOCAL_DYNAMODB_HOST=127.0.0.1 LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
+    "test:ci": "LOCAL_DYNAMODB_HOST=localhost LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
     "build": "npx tsc",
     "semantic-release": "semantic-release",
     "prepare": "husky install"
@@ -30,7 +31,6 @@
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.59.5",
     "@typescript-eslint/parser": "^5.59.5",
-    "codecov": "^3.8.3",
     "commitizen": "^4.3.0",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.40.0",
@@ -53,6 +53,13 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "release": {
+    "branches": [
+      "main",
+      "next",
+      "1.x"
+    ]
   },
   "lint-staged": {
     "*.{js,json,md,mdx,html,css,scss}": "npx prettier --write"
