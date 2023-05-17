@@ -32,7 +32,6 @@ describe('The get method', () => {
   test('should throw an error if hash key is not given', async () => {
     try {
       await model.get(null);
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Missing HashKey')).toBe(true);

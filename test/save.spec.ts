@@ -25,7 +25,6 @@ describe('The save method', () => {
     const foo = new HashKeyModel();
     try {
       await foo.save();
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('No item to save')).toBe(true);
@@ -43,7 +42,6 @@ describe('The save method', () => {
     });
     try {
       await foo.save();
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Validation error')).toBe(true);
@@ -99,7 +97,6 @@ describe('The save method [1st overload]', () => {
         bool: true,
         list: ['foo', 42],
       });
-      /* eslint-disable-next-line no-undef */
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('Validation error')).toBe(true);
