@@ -12,6 +12,7 @@
   },
   "globalSetup": "<rootDir>/test/hooks/setup.ts",
   "globalTeardown": "<rootDir>/test/hooks/teardown.ts",
+  "collectCoverage": true,
   "collectCoverageFrom": ["src/**/*.ts"],
   "coverageReporters": ["lcov", "json", "html"]
 }

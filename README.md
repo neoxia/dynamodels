@@ -1,11 +1,19 @@
 # Dynamodels
 
-[![npm version](https://badge.fury.io/js/dynamodels.svg)](https://badge.fury.io/js/dynamodels)
-[![Build Status](https://travis-ci.com/MarioArnt/dynamodels.svg?branch=master)](https://travis-ci.com/MarioArnt/dynamodels)
-[![codecov](https://codecov.io/gh/MarioArnt/dynamodels/branch/master/graph/badge.svg)](https://codecov.io/gh/MarioArnt/dynamodels)
-[![Maintainability](https://api.codeclimate.com/v1/badges/94282d95aa54fb567242/maintainability)](https://codeclimate.com/github/MarioArnt/dynamodels/maintainability)
-[![Known Vulnerabilities](https://snyk.io/test/github/MarioArnt/dynamodels/badge.svg)](https://snyk.io/test/github/MarioArnt/dynamodels)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+[![npm](https://img.shields.io/npm/v/dynamodels)](https://www.npmjs.com/package/dynamodels)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/dynamodels)](https://bundlephobia.com/package/dynamodels)
+![npm](https://img.shields.io/npm/dm/dynamodels)
+[![semantic-release](https://img.shields.io/badge/semantic--release-enabled?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/neoxia/dynamodels/publish.yml?branch=main)![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/neoxia/dynamodels)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=coverage)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=security_rating)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=sqale_index)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=bugs)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=code_smells)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
 
 ![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodels/master/logo.svg?sanitize=true)
 
@@ -203,10 +211,7 @@ You can use pagination helpers to get paginated result
 
 ```typescript
 const albums = new Album();
-const result = await albums
-  .scan()
-  .paginate({ size: 50 })
-  .exec();
+const result = await albums.scan().paginate({ size: 50 }).exec();
 ```
 
 This will return the 50 first items and the last evaluated key. To fetch the next page, simply use:
@@ -344,10 +349,7 @@ You can use, if you prefer, the same fluid sythax than for filter conditions.
 
 ```typescript
 const albums = new Album();
-const result = await albums
-  .query()
-  .keys(attr('artist').eq('Bob Dylan'))
-  .exec();
+const result = await albums.query().keys(attr('artist').eq('Bob Dylan')).exec();
 ```
 
 Just be aware that:
@@ -398,11 +400,7 @@ Pagination work the same way than for scan operations.
 
 ```typescript
 const albums = new Album();
-const result = await albums
-  .query()
-  .keys({ artist: 'Dire Straits' })
-  .paginate({ size: 50 })
-  .exec();
+const result = await albums.query().keys({ artist: 'Dire Straits' }).paginate({ size: 50 }).exec();
 ```
 
 This will return the 50 first items and the last evaluated key. To fetch the next page, simply use:
