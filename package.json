@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "author": "Mario Arnautou",
   "license": "MIT",
-  "repository": "https://github.com/MarioArnt/dynamodels",
+  "repository": "https://github.com/neoxia/dynamodels",
   "scripts": {
     "prettier": "npx prettier --write '{src,test}/**/*.{js,jsx,ts,tsx,json,yml}'",
     "lint": "npx eslint '{src,test}**/*'",

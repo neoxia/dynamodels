@@ -15,7 +15,7 @@
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=bugs)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=code_smells)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
 
-![Logo](https://raw.githubusercontent.com/MarioArnt/dynamodels/master/logo.svg?sanitize=true)
+![Logo](https://raw.githubusercontent.com/neoxia/dynamodels/master/logo.svg?sanitize=true)
 
 Dynamodels is a dead simple typescript overlay to easily manage DynamoDB CRUD operations.
 
