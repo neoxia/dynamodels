@@ -42,7 +42,9 @@ jobs:
           port: 8022
           cors: '*'
       - name: Run Unit Tests
-        run: npm test
+        run: |
+          npm run test
+          ls coverage/
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
@@ -67,4 +69,4 @@ jobs:
       - name: Build
         run: npm run build
       - name: Publish
-        run: npx semantic-release --dry-run
+        run: npx semantic-release
