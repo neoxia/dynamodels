@@ -71,4 +71,4 @@ jobs:
           port: 8022
           cors: '*'
       - name: Run Unit Tests
-        run: npm test:ci
+        run: npm run test:ci
