@@ -10,7 +10,7 @@ import {
   ScanCommandInput,
   ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import { KeyValue } from './base-model';
+import Model, { KeyValue } from './base-model';
 
 export interface IPaginatedResult<T> {
   items: T[];
@@ -20,7 +20,7 @@ export interface IPaginatedResult<T> {
 
 export type PageReceivedHook<T> = (page: IPaginatedResult<T>) => void;
 
-export default abstract class Operation<T extends Record<string, unknown>> {
+export default abstract class Operation<T> {
   protected documentClient: DynamoDBDocumentClient;
 
   protected params: QueryCommandInput | ScanCommandInput;
@@ -194,9 +194,9 @@ export default abstract class Operation<T extends Record<string, unknown>> {
     if (items.length > size && items[size - 1]) {
       const lastEvaluatedItem: T = items[size - 1];
       lastEvaluatedKey = {};
-      lastEvaluatedKey[this.pk] = lastEvaluatedItem[this.pk] as KeyValue;
+      lastEvaluatedKey[this.pk] = Model.pkValue(lastEvaluatedItem, this.pk);
       if (this.sk) {
-        lastEvaluatedKey[this.sk] = lastEvaluatedItem[this.sk] as KeyValue;
+        lastEvaluatedKey[this.sk] = Model.skValue(lastEvaluatedItem, this.sk);
       }
     }
     return {

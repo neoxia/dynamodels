@@ -27,13 +27,11 @@ export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
 type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
-const isKey = (key: KeyValue | Record<string, unknown>): key is KeyValue =>
-  typeof key !== 'object' || key?.constructor === Buffer;
 
 const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
   (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
 
-export default abstract class Model<T extends Record<string, unknown>> {
+export default abstract class Model<T> {
   protected tableName: string | undefined;
 
   protected item: T | undefined;
@@ -57,12 +55,64 @@ export default abstract class Model<T extends Record<string, unknown>> {
     );
   }
 
+  static keyValue(item: unknown | undefined, key: string, type: 'range' | 'hash'): KeyValue {
+    if (!item) {
+      throw new Error(`Model error: tried to access ${type} key value on undefined`);
+    }
+    if (typeof item !== 'object') {
+      throw new Error(`Model error: tried to access ${type} key of a non-object`);
+    }
+    const skValue = (item as Record<string, unknown>)[key];
+    if (skValue === undefined) {
+      throw new Error(`Model error: ${type} key "${key}" is not defined on ${JSON.stringify(item)}`);
+    }
+    if (!this.isKey(skValue)) {
+      throw new Error('Model error: ${type} key value is neither a primitive type nor Buffer');
+    }
+    return skValue as KeyValue;
+  }
+
+  static pkValue(item: unknown, pk?: string) {
+    if (!pk) {
+      throw new Error('Model error: hash key is not defined on this Model');
+    }
+    return this.keyValue(item, pk, 'hash');
+  }
+
+  static skValue(item: unknown, sk?: string) {
+    if (!sk) {
+      throw new Error('Model error: tried to access range key value on a non-composite model');
+    }
+    return this.keyValue(item, sk, 'range');
+  }
+
+  static isKey(key: unknown): key is KeyValue {
+    return key === null || ['string', 'boolean', 'number'].includes(typeof key) || Buffer.isBuffer(key);
+  }
+
   public setItem(item: T): void {
     this.item = item;
   }
 
   public getItem(): T | undefined {
     return this.item;
+  }
+
+  private isItem(item: unknown): item is T {
+    try {
+      this.pkValue(item as T);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private pkValue(item: T): KeyValue {
+    return Model.pkValue(item, this.pk);
+  }
+
+  private skValue(item: T): KeyValue {
+    return Model.skValue(item, this.sk);
   }
 
   /**
@@ -95,10 +145,10 @@ export default abstract class Model<T extends Record<string, unknown>> {
       );
     }
     const putOptions: Partial<PutCommandInput> | undefined =
-      item_options != null && this.isItem(item_options) ? options : item_options;
+      item_options != null && this.isItem(item_options) ? options : item_options as Partial<PutCommandInput> | undefined;
     // Extract keys
-    const pk = toCreate[this.pk] as KeyValue;
-    const sk: KeyValue | undefined = this.sk != null ? (toCreate[this.sk] as KeyValue) : undefined;
+    const pk = this.pkValue(toCreate);
+    const sk: KeyValue | undefined = this.sk != null ? this.skValue(toCreate) : undefined;
     // Prevent overwriting of existing item
     if (await this.exists(pk, sk)) {
       const error = new Error(
@@ -109,13 +159,6 @@ export default abstract class Model<T extends Record<string, unknown>> {
     }
     // Save item
     return this.save(toCreate, putOptions);
-  }
-
-  private isItem(item: T | unknown): item is T {
-    if (!this.pk) {
-      throw new Error('Primary key is not defined on your model');
-    }
-    return (item as T)[this.pk] !== undefined;
   }
 
   /**
@@ -140,7 +183,7 @@ export default abstract class Model<T extends Record<string, unknown>> {
     const toSave: T | undefined =
       item_options != null && this.isItem(item_options) ? item_options : this.item;
     const putOptions: Partial<PutCommandInput> | undefined =
-      item_options != null && this.isItem(item_options) ? options : item_options;
+      item_options != null && this.isItem(item_options) ? options : item_options as Partial<PutCommandInput> | undefined;
     // Validate item to put
     if (!toSave) {
       throw new Error(
@@ -190,8 +233,8 @@ export default abstract class Model<T extends Record<string, unknown>> {
     options?: Partial<GetCommandInput>,
   ): Promise<T | null> {
     // Handle method overloading
-    const sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
-    const getOptions = Model.getOptions(sk_options, options);
+    const sk: KeyValue = sk_options != null && Model.isKey(sk_options) ? sk_options : null;
+    const getOptions = this.getOptions(sk_options, options);
     // Prepare getItem operation
     this.testKeys(pk, sk);
     const params: GetCommandInput = {
@@ -280,9 +323,9 @@ export default abstract class Model<T extends Record<string, unknown>> {
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
-    const _pk: KeyValue | undefined = isKey(pk_item) ? pk_item : (pk_item ? pk_item[this.pk] as KeyValue : undefined);
-    const _sk: KeyValue = sk_options != null && isKey(sk_options) ? sk_options : null;
-    const deleteOptions = Model.getOptions(sk_options, options);
+    const _pk: KeyValue | undefined = Model.isKey(pk_item) ? pk_item : (pk_item ? this.pkValue(pk_item) : undefined);
+    const _sk: KeyValue = sk_options != null && Model.isKey(sk_options) ? sk_options : null;
+    const deleteOptions = this.getOptions(sk_options, options);
     // Build delete item params
     const { pk, sk } = this.testKeys(_pk, _sk);
     if (!(await this.exists(pk, sk))) {
@@ -467,7 +510,7 @@ export default abstract class Model<T extends Record<string, unknown>> {
     let sk: KeyValue;
     let updateActions: IUpdateActions;
     let nativeOptions: Partial<UpdateCommandInput> | undefined;
-    if (!isKey(sk_actions)) {
+    if (!Model.isKey(sk_actions)) {
       // 1st overload
       sk = null;
       updateActions = sk_actions;
@@ -503,11 +546,11 @@ export default abstract class Model<T extends Record<string, unknown>> {
     return keys;
   }
 
-  private static getOptions(
+  private getOptions(
     sk_options: KeyValue | Partial<GetCommandInput> | undefined,
     options: Partial<GetCommandInput> | undefined,
   ): Partial<GetCommandInput> | undefined {
-    return sk_options != null && isKey(sk_options)
+    return sk_options != null && Model.isKey(sk_options)
       ? options
       : (sk_options as Partial<GetCommandInput>);
   }

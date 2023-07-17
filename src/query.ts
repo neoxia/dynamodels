@@ -14,7 +14,7 @@ import {
 const isFluid = (keyConditions: IKeyConditions | KeyCondition): keyConditions is KeyCondition =>
   keyConditions instanceof KeyCondition;
 
-export default class Query<T extends Record<string, unknown>> extends Operation<T> {
+export default class Query<T> extends Operation<T> {
   protected params: QueryCommandInput;
 
   constructor(

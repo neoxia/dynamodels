@@ -9,7 +9,7 @@ import {
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
-export default class Scan<T extends Record<string, unknown>> extends Operation<T> {
+export default class Scan<T> extends Operation<T> {
   protected params: ScanCommandInput;
 
   constructor(
