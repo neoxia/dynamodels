@@ -43,7 +43,7 @@ jobs:
           cors: '*'
       - name: Run Unit Tests
         run: |
-          npm run test
+          npm run test:ci
           ls coverage/
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
