@@ -6,5 +6,6 @@ export * from './operators';
 export { PaginationMode };
 export { IFilterConditions } from './build-keys';
 export { IPaginatedResult, PageReceivedHook } from './operation';
+export { attr, not } from './filter-conditions';
 
 export default Model;
