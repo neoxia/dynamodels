@@ -1,5 +1,5 @@
 import Model from '../../src/base-model';
-import {CommonFields} from "../models/common";
+import { CommonFields } from '../models/common';
 
 const generateBool = (i: number) => {
   if (i % 3 === 0) {
@@ -8,7 +8,10 @@ const generateBool = (i: number) => {
   return i % 3 === 1 ? false : null;
 };
 
-const generatePartial = (i: number, numericalKeys?: boolean): CommonFields & { rangekey: string | number } => ({
+const generatePartial = (
+  i: number,
+  numericalKeys?: boolean,
+): CommonFields & { rangekey: string | number } => ({
   rangekey: numericalKeys ? i : `rangekey-${i}`,
   number: i % 2 === 0 ? i : null,
   bool: generateBool(i),
@@ -47,7 +50,9 @@ export default async (
   nbEntries: number,
   numericalKeys?: boolean,
 ): Promise<Array<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> => {
-  const promises: Array<Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> = [];
+  const promises: Array<
+    Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>
+  > = [];
   for (let i = 0; i < Math.floor(nbEntries / 2); i += 1) {
     promises.push(save(model, 1, i, numericalKeys));
   }
@@ -63,7 +68,9 @@ export const hashOnly = async (
   nbEntries: number,
   numericalKeys?: boolean,
 ): Promise<Array<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> => {
-  const promises: Array<Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>> = [];
+  const promises: Array<
+    Promise<CommonFields & { rangekey: string | number } & { hashkey: string | number }>
+  > = [];
   for (let i = 0; i < Math.floor(nbEntries / 2); i += 1) {
     promises.push(save(model, i, i, numericalKeys));
   }

@@ -352,7 +352,8 @@ describe('The scan method [filtering / object syntax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
+          (i) =>
+            i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -796,7 +797,10 @@ describe('The scan method [filtering / fluid syntax]', () => {
       );
     });
     test('should return items where IN condition is true [number]', async () => {
-      const result = await model.scan().filter(attr('number').in(2, 12, 14, 0)).exec();
+      const result = await model
+        .scan()
+        .filter(attr('number').in(2, 12, 14, 0))
+        .exec();
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
@@ -892,7 +896,8 @@ describe('The scan method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
+          (i) =>
+            i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -1151,7 +1156,9 @@ describe('The scan method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
       expect(
-        result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number! >= 12),
+        result.items.every(
+          (i) => i.string!.match(/^string-1/) && i.bool === true && i.number! >= 12,
+        ),
       ).toBe(true);
     });
   });
@@ -1169,7 +1176,9 @@ describe('The scan method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
       expect(
-        result.items.every((i) => (i.bool === true && i.number! < 8) || i.string!.match(/^string-1/)),
+        result.items.every(
+          (i) => (i.bool === true && i.number! < 8) || i.string!.match(/^string-1/),
+        ),
       ).toBe(true);
     });
   });
@@ -1190,7 +1199,9 @@ describe('The scan method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
       expect(
-        result.items.every((i) => i.bool === true && (i.number! < 8 || i.string!.match(/^string-1/))),
+        result.items.every(
+          (i) => i.bool === true && (i.number! < 8 || i.string!.match(/^string-1/)),
+        ),
       ).toBe(true);
     });
   });
@@ -1219,7 +1230,9 @@ describe('The scan method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
       expect(
-        result.items.every((i) => !(i.bool === false || (i.string && i.string!.match(/^string-1/)))),
+        result.items.every(
+          (i) => !(i.bool === false || (i.string && i.string!.match(/^string-1/))),
+        ),
       ).toBe(true);
     });
   });
@@ -1252,9 +1265,8 @@ describe('The scan method [projection]', () => {
     const result = await model.scan().projection(['string']).exec();
     expect(result.count).toBe(17);
     expect(
-      result.items.every(
-        (i) =>
-          attributes.filter((att) => att !== 'string').every((att) => i[att] === undefined),
+      result.items.every((i) =>
+        attributes.filter((att) => att !== 'string').every((att) => i[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1271,9 +1283,8 @@ describe('The scan method [projection]', () => {
     const result = await model.scan().projection(['bool']).exec();
     expect(result.count).toBe(17);
     expect(
-      result.items.every(
-        (i) =>
-          attributes.filter((att) => att !== 'bool').every((att) => i[att] === undefined),
+      result.items.every((i) =>
+        attributes.filter((att) => att !== 'bool').every((att) => i[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1281,9 +1292,8 @@ describe('The scan method [projection]', () => {
     const result = await model.scan().projection(['list']).exec();
     expect(result.count).toBe(17);
     expect(
-      result.items.every(
-        (i) =>
-          attributes.filter((att) => att !== 'list').every((att) => i[att] === undefined),
+      result.items.every((i) =>
+        attributes.filter((att) => att !== 'list').every((att) => i[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1305,9 +1315,8 @@ describe('The scan method [projection]', () => {
     const result = await model.scan().projection(['stringset']).exec();
     expect(result.count).toBe(17);
     expect(
-      result.items.every(
-        (i) =>
-          attributes.filter((att) => att !== 'stringset').every((att) => i[att] === undefined),
+      result.items.every((i) =>
+        attributes.filter((att) => att !== 'stringset').every((att) => i[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1329,9 +1338,8 @@ describe('The scan method [projection]', () => {
     const result = await model.scan().projection(['stringmap']).exec();
     expect(result.count).toBe(17);
     expect(
-      result.items.every(
-        (i) =>
-          attributes.filter((att) => att !== 'stringmap').every((att) => i[att] === undefined),
+      result.items.every((i) =>
+        attributes.filter((att) => att !== 'stringmap').every((att) => i[att] === undefined),
       ),
     ).toBe(true);
   });
@@ -1346,8 +1354,7 @@ describe('The scan method [projection]', () => {
         (i) =>
           attributes.filter((att) => att !== 'stringmap').every((att) => i[att] == null) &&
           (i.stringmap == null ||
-            (i.stringmap?.key2 != null &&
-              !Object.keys(i.stringmap).some((k) => k !== 'key2'))),
+            (i.stringmap?.key2 != null && !Object.keys(i.stringmap).some((k) => k !== 'key2'))),
       ),
     ).toBe(true);
   });
