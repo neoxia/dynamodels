@@ -8,5 +8,4 @@ export default async (): Promise<void> => {
     console.error('Fatal: Error cleaning database', e);
     process.exit(1);
   }
-
 };

@@ -64,7 +64,9 @@ export default abstract class Model<T> {
     }
     const skValue = (item as Record<string, unknown>)[key];
     if (skValue === undefined) {
-      throw new Error(`Model error: ${type} key "${key}" is not defined on ${JSON.stringify(item)}`);
+      throw new Error(
+        `Model error: ${type} key "${key}" is not defined on ${JSON.stringify(item)}`,
+      );
     }
     if (!this.isKey(skValue)) {
       throw new Error('Model error: ${type} key value is neither a primitive type nor Buffer');
@@ -87,7 +89,9 @@ export default abstract class Model<T> {
   }
 
   static isKey(key: unknown): key is KeyValue {
-    return key === null || ['string', 'boolean', 'number'].includes(typeof key) || Buffer.isBuffer(key);
+    return (
+      key === null || ['string', 'boolean', 'number'].includes(typeof key) || Buffer.isBuffer(key)
+    );
   }
 
   public setItem(item: T): void {
@@ -145,7 +149,9 @@ export default abstract class Model<T> {
       );
     }
     const putOptions: Partial<PutCommandInput> | undefined =
-      item_options != null && this.isItem(item_options) ? options : item_options as Partial<PutCommandInput> | undefined;
+      item_options != null && this.isItem(item_options)
+        ? options
+        : (item_options as Partial<PutCommandInput> | undefined);
     // Extract keys
     const pk = this.pkValue(toCreate);
     const sk: KeyValue | undefined = this.sk != null ? this.skValue(toCreate) : undefined;
@@ -183,7 +189,9 @@ export default abstract class Model<T> {
     const toSave: T | undefined =
       item_options != null && this.isItem(item_options) ? item_options : this.item;
     const putOptions: Partial<PutCommandInput> | undefined =
-      item_options != null && this.isItem(item_options) ? options : item_options as Partial<PutCommandInput> | undefined;
+      item_options != null && this.isItem(item_options)
+        ? options
+        : (item_options as Partial<PutCommandInput> | undefined);
     // Validate item to put
     if (!toSave) {
       throw new Error(
@@ -252,7 +260,10 @@ export default abstract class Model<T> {
     return null;
   }
 
-  private testKeys(pk: KeyValue | undefined, sk: KeyValue | undefined): { pk: KeyValue, sk?: KeyValue } {
+  private testKeys(
+    pk: KeyValue | undefined,
+    sk: KeyValue | undefined,
+  ): { pk: KeyValue; sk?: KeyValue } {
     if (!pk) {
       throw Error(`Missing HashKey ${this.pk}=${pk}`);
     }
@@ -323,7 +334,11 @@ export default abstract class Model<T> {
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
-    const _pk: KeyValue | undefined = Model.isKey(pk_item) ? pk_item : (pk_item ? this.pkValue(pk_item) : undefined);
+    const _pk: KeyValue | undefined = Model.isKey(pk_item)
+      ? pk_item
+      : pk_item
+      ? this.pkValue(pk_item)
+      : undefined;
     const _sk: KeyValue = sk_options != null && Model.isKey(sk_options) ? sk_options : null;
     const deleteOptions = this.getOptions(sk_options, options);
     // Build delete item params

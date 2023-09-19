@@ -875,7 +875,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.number!  <= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! <= 12)).toBe(true);
     });
   });
   describe('LT', () => {
@@ -905,7 +905,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number!  < 12)).toBe(true);
+      expect(result.items.every((i) => i.number! < 12)).toBe(true);
     });
   });
   describe('GE', () => {
@@ -935,7 +935,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
-      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 12)).toBe(true);
     });
   });
   describe('GT', () => {
@@ -965,7 +965,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 12)).toBe(true);
     });
   });
   describe('BETWEEN', () => {
@@ -983,7 +983,8 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
+          (i) =>
+            i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -999,7 +1000,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number!  >= 6 && i.number!  <= 17)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 6 && i.number! <= 17)).toBe(true);
     });
   });
   describe('NOT_EXISTS', () => {
@@ -1187,7 +1188,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number!  != null)).toBe(true);
+      expect(result.items.every((i) => i.number! != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1267,7 +1268,7 @@ describe('The query method [filtering / object syntax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number!  == null)).toBe(true);
+      expect(result.items.every((i) => i.number! == null)).toBe(true);
     });
     test('should return items where NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1381,7 +1382,7 @@ describe('The query method [filtering / object syntax]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(result.items.length).toBe(2);
     expect(
-      result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number!  >= 12),
+      result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number! >= 12),
     ).toBe(true);
   });
   test('should not filter if empty object is passed', async () => {
@@ -1534,7 +1535,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(7);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
-      expect(result.items.every((i) => i.number!  <= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! <= 12)).toBe(true);
     });
   });
   describe('LT', () => {
@@ -1560,7 +1561,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number!  < 12)).toBe(true);
+      expect(result.items.every((i) => i.number! < 12)).toBe(true);
     });
   });
   describe('GE', () => {
@@ -1584,7 +1585,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
-      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 12)).toBe(true);
     });
   });
   describe('GT', () => {
@@ -1608,7 +1609,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(3);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
-      expect(result.items.every((i) => i.number!  >= 12)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 12)).toBe(true);
     });
   });
   describe('BETWEEN', () => {
@@ -1624,7 +1625,8 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(3);
       expect(
         result.items.every(
-          (i) => i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
+          (i) =>
+            i.string!.localeCompare('string-3') >= 0 && i.string!.localeCompare('string-8') <= 0,
         ),
       ).toBe(true);
     });
@@ -1639,7 +1641,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(6);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
-      expect(result.items.every((i) => i.number!  >= 6 && i.number!  <= 17)).toBe(true);
+      expect(result.items.every((i) => i.number! >= 6 && i.number! <= 17)).toBe(true);
     });
   });
   describe('NOT_EXISTS', () => {
@@ -1799,7 +1801,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number!  != null)).toBe(true);
+      expect(result.items.every((i) => i.number! != null)).toBe(true);
     });
     test('should return items where NOT_NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1867,7 +1869,7 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.count).toBe(10);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
-      expect(result.items.every((i) => i.number!  == null)).toBe(true);
+      expect(result.items.every((i) => i.number! == null)).toBe(true);
     });
     test('should return items where NULL condition is true [boolean]', async () => {
       const result = await model
@@ -1986,7 +1988,9 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(2);
       expect(
-        result.items.every((i) => i.string!.match(/^string-1/) && i.bool === true && i.number!  >= 12),
+        result.items.every(
+          (i) => i.string!.match(/^string-1/) && i.bool === true && i.number! >= 12,
+        ),
       ).toBe(true);
     });
   });
@@ -2004,7 +2008,9 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
       expect(
-        result.items.every((i) => (i.bool === true && i.number!  < 8) || i.string!.match(/^string-1/)),
+        result.items.every(
+          (i) => (i.bool === true && i.number! < 8) || i.string!.match(/^string-1/),
+        ),
       ).toBe(true);
     });
   });
@@ -2026,7 +2032,9 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(4);
       expect(
-        result.items.every((i) => i.bool === true && (i.number!  < 8 || i.string!.match(/^string-1/))),
+        result.items.every(
+          (i) => i.bool === true && (i.number! < 8 || i.string!.match(/^string-1/)),
+        ),
       ).toBe(true);
     });
   });
@@ -2058,7 +2066,9 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
       expect(
-        result.items.every((i) => !(i.bool === false || (i.string! && i.string!.match(/^string-1/)))),
+        result.items.every(
+          (i) => !(i.bool === false || (i.string! && i.string!.match(/^string-1/))),
+        ),
       ).toBe(true);
     });
   });

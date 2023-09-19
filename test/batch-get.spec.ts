@@ -2,7 +2,7 @@ import CompositeKeyModel from './models/composite-keys';
 import { clearTables } from './hooks/create-tables';
 import { hashOnly } from './factories';
 import HashKeyModel from './models/hashkey';
-import {KeyValue} from "../src/base-model";
+import { KeyValue } from '../src/base-model';
 
 jest.setTimeout(20 * 1000);
 
