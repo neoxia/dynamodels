@@ -1,3 +1,5 @@
+import {CreateTableCommandInput} from "@aws-sdk/client-dynamodb";
+
 export default {
   AttributeDefinitions: [
     {
@@ -70,4 +72,4 @@ export default {
       },
     },
   ],
-};
+} as CreateTableCommandInput;

@@ -15,10 +15,6 @@ const tables: Record<string, CreateTableCommandInput> = {
 };
 
 const dynamodb = new DynamoDBClient({
-  credentials: {
-    accessKeyId: '$fake',
-    secretAccessKey: '$fake',
-  },
   region: 'local',
   endpoint: `http://${process.env.LOCAL_DYNAMODB_HOST}:${process.env.LOCAL_DYNAMODB_PORT || 8000}`,
 });
