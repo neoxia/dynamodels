@@ -21,7 +21,7 @@ export type IFilterConditionOperators =
   | 'BEGINS_WITH';
 
 export class FilterCondition extends Condition<FilterValue> {
-  public and(condition: FilterCondition): FilterCondition {
+  public and(condition: FilterCondition): this {
     super.and(condition);
     return this;
   }
@@ -30,7 +30,7 @@ export class FilterCondition extends Condition<FilterValue> {
     return this.combine(condition, 'OR') as FilterCondition;
   }
 
-  public not(): FilterCondition {
+  public not(): this {
     this.expression = `NOT (${this.expression})`;
     return this;
   }

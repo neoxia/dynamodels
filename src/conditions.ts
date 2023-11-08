@@ -26,7 +26,7 @@ export default abstract class Condition<T> {
     });
   }
 
-  protected combine(condition: Condition<T>, logicalOperator: 'AND' | 'OR'): Condition<T> {
+  protected combine(condition: Condition<T>, logicalOperator: 'AND' | 'OR'): this {
     this.prepareExpression(condition);
     this.expression = `${this.expression} ${logicalOperator} (${condition.expression})`;
     return this;
