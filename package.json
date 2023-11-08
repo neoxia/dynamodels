@@ -18,8 +18,8 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.370.0",
-    "@aws-sdk/lib-dynamodb": "^3.370.0",
+    "@aws-sdk/client-dynamodb": "^3.445.0",
+    "@aws-sdk/lib-dynamodb": "^3.445.0",
     "joi": "^17.9.2",
     "uuid": "^9.0.0"
   },
