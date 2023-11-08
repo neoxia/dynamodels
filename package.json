@@ -12,7 +12,7 @@
     "pre:commit": "npm run prettier && npm run lint",
     "pre:test": "docker run -d -p 8022:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb",
     "test": "LOCAL_DYNAMODB_HOST=127.0.0.1 LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
-    "test:ci": "LOCAL_DYNAMODB_HOST=localhost LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
+    "test:ci": "AWS_PROFILE=null LOCAL_DYNAMODB_HOST=localhost LOCAL_DYNAMODB_PORT=8022 npx jest --runInBand --config jest.config.json --coverage --detectOpenHandles",
     "build": "npx tsc",
     "semantic-release": "semantic-release",
     "prepare": "husky install"
