@@ -5,7 +5,7 @@
 ![npm](https://img.shields.io/npm/dm/dynamodels)
 [![semantic-release](https://img.shields.io/badge/semantic--release-enabled?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/neoxia/dynamodels/publish.yml?branch=main)![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/neoxia/dynamodels)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/neoxia/dynamodels/publish.yml?branch=main)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=coverage)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=neoxia_dynamodels&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=neoxia_dynamodels)
