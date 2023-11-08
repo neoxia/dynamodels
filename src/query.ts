@@ -37,7 +37,7 @@ export default class Query<T> extends Operation<T> {
    * and() and key operators method helpers
    * eq(), le(), lt(), ge(), gt() and beginsWith()
    */
-  public keys(keyConditions: IKeyConditions | KeyCondition): Query<T> {
+  public keys(keyConditions: IKeyConditions | KeyCondition): this {
     let builtConditions: IBuiltConditions;
     if (isFluid(keyConditions)) {
       builtConditions = keyConditions.build();
@@ -54,27 +54,27 @@ export default class Query<T> extends Operation<T> {
    * Performs query using a specified index
    * @param name: the name of the index to use
    */
-  public index(name: string): Query<T> {
+  public index(name: string): this {
     this.params.IndexName = name;
     return this;
   }
 
-  public limit(limit: number): Query<T> {
+  public limit(limit: number): this {
     this.doLimit(limit);
     return this;
   }
 
-  public consistent(isConsistent?: boolean): Query<T> {
+  public consistent(isConsistent?: boolean): this {
     this.doConsistent(isConsistent);
     return this;
   }
 
-  public filter(filterConditions: IFilterConditions | FilterCondition): Query<T> {
+  public filter(filterConditions: IFilterConditions | FilterCondition): this {
     this.doFilter(filterConditions);
     return this;
   }
 
-  public paginate(options: IPaginationOptions): Query<T> {
+  public paginate(options: IPaginationOptions): this {
     this.doPaginate(options);
     return this;
   }
@@ -84,7 +84,7 @@ export default class Query<T> extends Operation<T> {
    * Query is always sort on the table/index range key.
    * @param direction 'asc' or 'desc'
    */
-  public sort(direction: 'asc' | 'desc'): Query<T> {
+  public sort(direction: 'asc' | 'desc'): this {
     // According to documentation ScanIndexForward must be true if ascending
     // @link https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
     this.params.ScanIndexForward = direction === 'asc';

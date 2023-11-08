@@ -119,7 +119,7 @@ export default abstract class Operation<T> {
 
   projection(
     fields: Array<string | { list: string; index: number } | { map: string; key: string }>,
-  ): Operation<T> {
+  ): this {
     this.doProject(fields);
     return this;
   }

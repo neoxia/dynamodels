@@ -22,22 +22,22 @@ export default class Scan<T> extends Operation<T> {
     this.params = params;
   }
 
-  public limit(limit: number): Scan<T> {
+  public limit(limit: number): this {
     this.doLimit(limit);
     return this;
   }
 
-  public consistent(isConsistent?: boolean): Scan<T> {
+  public consistent(isConsistent?: boolean): this {
     this.doConsistent(isConsistent);
     return this;
   }
 
-  public filter(filterConditions: IFilterConditions | FilterCondition): Scan<T> {
+  public filter(filterConditions: IFilterConditions | FilterCondition): this {
     this.doFilter(filterConditions);
     return this;
   }
 
-  public paginate(options: IPaginationOptions): Scan<T> {
+  public paginate(options: IPaginationOptions): this {
     this.doPaginate(options);
     return this;
   }
