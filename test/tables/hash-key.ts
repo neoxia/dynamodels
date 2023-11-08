@@ -1,3 +1,5 @@
+import {CreateTableCommandInput} from "@aws-sdk/client-dynamodb";
+
 export default {
   AttributeDefinitions: [
     {
@@ -16,4 +18,4 @@ export default {
     WriteCapacityUnits: 5,
   },
   TableName: 'table_test_hashkey',
-};
+} as CreateTableCommandInput;
