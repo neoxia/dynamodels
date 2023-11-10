@@ -24,6 +24,12 @@ import ValidationError from './validation-error';
 import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
 
 export type KeyValue = string | number | Buffer | boolean | null;
+
+export interface UpToDateEntity {
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 type SimpleKey = KeyValue;
 type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
@@ -43,6 +49,10 @@ export default abstract class Model<T> {
   protected documentClient: DynamoDBDocumentClient;
 
   protected schema: ObjectSchema | undefined;
+
+  protected autoCreatedAt = false;
+
+  protected autoUpdatedAt = false;
 
   constructor(item?: T, options?: DynamoDBClientConfig, translateConfig?: TranslateConfig) {
     this.item = item;
@@ -162,6 +172,9 @@ export default abstract class Model<T> {
       );
       error.name = 'E_ALREADY_EXISTS';
       throw error;
+    }
+    if (this.autoCreatedAt) {
+      (toCreate as T & UpToDateEntity).createdAt = new Date().toISOString();
     }
     // Save item
     return this.save(toCreate, putOptions);

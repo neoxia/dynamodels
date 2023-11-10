@@ -2,10 +2,14 @@ import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
 import HashKeyJoiModel from './models/hashkey-joi';
 import CompositeKeyModel from './models/composite-keys';
+import HashKeyUpToDateModel from './models/hashkey-up-to-date';
 
 describe('The create method', () => {
   beforeEach(async () => {
     await clearTables();
+  });
+  afterEach(async () => {
+    jest.resetAllMocks();
   });
   test('should save the item held by the class', async () => {
     const item = {
@@ -24,6 +28,47 @@ describe('The create method', () => {
     });
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
+  });
+  test('should not override date when autoCreatedAt is false', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+      createdAt: '2023-08-09T10:11:12.131Z',
+    };
+    const foo = new HashKeyModel(item);
+    expect(foo.getItem()).toBe(item);
+    await foo.create({
+      ReturnConsumedCapacity: 'NONE',
+    });
+    const saved = await foo.get('bar');
+    expect(saved).toEqual(item);
+  });
+  test('should save the item with autoCreatedAt field', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const expectedItem = {
+      ...item,
+      createdAt: '2023-11-10T14:36:39.297Z',
+    }
+    const foo = new HashKeyUpToDateModel(item);
+    jest.spyOn(Date.prototype, 'toISOString').mockImplementation(() => '2023-11-10T14:36:39.297Z');
+    await foo.create({
+      ReturnConsumedCapacity: 'NONE',
+    });
+    const saved = await foo.get('bar');
+    expect(saved).toEqual(expectedItem);
   });
   test('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();
