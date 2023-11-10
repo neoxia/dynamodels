@@ -18,6 +18,7 @@ export type CommonFields = {
   stringset: string[] | null;
   list: Array<number | string> | null;
   stringmap: { [key: string]: string } | null;
+  nested?: { [key: string]: any } | undefined;
   optionalNumber?: number | undefined;
   optionalBool?: boolean | undefined;
   optionalString?: string | undefined;

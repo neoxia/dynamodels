@@ -19,6 +19,7 @@ const generatePartial = (
   stringset: i % 2 === 0 ? [`string-${i}-0`, `string-${i}-1`, `string-${i}-2`] : null,
   list: i % 2 === 0 ? [i, `item-${i}`] : null,
   stringmap: i % 2 === 0 ? { [`key${i}`]: `value-${i}` } : null,
+  nested: i % 2 === 0 ? { [`nestedkey${i}`]: `value-${i}` } : undefined,
   optionalNumber: i % 2 === 0 ? i : undefined,
   optionalBool: i % 2 === 0 ? true : undefined,
   optionalString: i % 2 === 0 ? `string-${i}` : undefined,

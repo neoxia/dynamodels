@@ -92,6 +92,8 @@ export default class Query<T> extends Operation<T> {
   }
 
   public async doExec(): Promise<IPaginatedResult<T>> {
+    //this.params.FilterExpression needs to be updated too
+    // test property can be removed (duplicate), FilterExpression, ExpressionAttributeNames, ExpressionAttributeValues updated. doesnt work with uuid because reference between FilterExpression and ExpAttNames aint working
     const result = await this.documentClient.send(new QueryCommand(this.params));
     return this.buildResponse(result);
   }

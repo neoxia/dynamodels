@@ -1391,6 +1391,18 @@ describe('The query method [filtering / object syntax]', () => {
     expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
     expect(result.items.length).toBe(20);
   });
+  test('should return items where nested property', async () => {
+    const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.nestedkey2').eq('value-2'))
+        .exec();
+
+    expect(result.count).toBe(1);
+    expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+    expect(result.items.length).toBe(1);
+    expect(result.items[0].string).toBe('string-2');
+  })
 });
 
 describe('The query method [filtering / fluid syntax]', () => {

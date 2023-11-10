@@ -13,15 +13,27 @@ export default abstract class ConditionAttribute<T> {
     this.field = field;
   }
 
-  protected getAttributeUniqueIdentifier(): string {
-    return this.field + uuid().replace(/-/g, '');
+  protected getAttributeUniqueIdentifier(attr = this.field): string {
+    return attr + uuid().replace(/-/g, '');
   }
 
   protected fillMaps(id: string, value: T) {
+    const multiAttr = id.split('.');
     const attr: Map<string, string> = new Map();
-    const values: Map<string, T> = new Map();
-    attr.set(`#${id}`, this.field);
-    values.set(`:${id}`, value);
+    const values: Map<string, any> = new Map();
+    const tempValue: any = new Object({});
+    for(let i = 0; i < multiAttr.length; i++) {
+      const attrId = this.getAttributeUniqueIdentifier(multiAttr[i]);
+      attr.set(`#${attrId}`, multiAttr[i]);
+      if(multiAttr.length !== 1 && i === multiAttr.length - 1) {
+        tempValue[attrId] = value;
+        //values.set(`:${multiAttr[0]}`, tempValue);
+      }
+    }
+    /*if(multiAttr.length === 1) {
+      values.set(`:${multiAttr[0]}`, value);
+    }*/
+    values.set(`:${multiAttr.at(-1)}`, value);
     return { attr, values };
   }
 
@@ -40,14 +52,14 @@ export default abstract class ConditionAttribute<T> {
   public abstract beginsWith(value: T): Condition<T>;
 
   protected prepareOp(value: T): { id: string; attr: Map<string, string>; values: Map<string, T> } {
-    const id = this.getAttributeUniqueIdentifier();
+    const id = this.field; //this.getAttributeUniqueIdentifier();
     const { attr, values } = this.fillMaps(id, value);
     return { id, attr, values };
   }
 
   private arithmeticOperation(value: T, operator: ArithmeticOperator): IArgs<T> {
     const { id, attr, values } = this.prepareOp(value);
-    return [`#${id} ${operator} :${id}`, attr, values];
+    return [`#${id.replace('.', '.#')} ${operator} :${id.split('.').at(-1)}`, attr, values];
   }
 
   protected prepareEq(value: T): IArgs<T> {
