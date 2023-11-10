@@ -1,8 +1,11 @@
 import { ObjectSchema } from 'joi';
-import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import {DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   BatchGetCommand,
   BatchGetCommandInput,
+    BatchWriteCommand,
+    BatchWriteCommandInput,
+    BatchWriteCommandOutput,
   DeleteCommand,
   DeleteCommandInput,
   DeleteCommandOutput,
@@ -27,6 +30,8 @@ export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
 type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
+
+export const DYNAMODB_BATCH_WRITE_MAX_CHUNK_SIZE = 25;
 
 const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
   (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
@@ -165,6 +170,66 @@ export default abstract class Model<T> {
     }
     // Save item
     return this.save(toCreate, putOptions);
+  }
+
+  private splitIntoChunks(items: Array<any>, chunkSize = DYNAMODB_BATCH_WRITE_MAX_CHUNK_SIZE): Array<Array<T>> {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += chunkSize) {
+      chunks.push(items.slice(i, i + chunkSize));
+    }
+    return chunks;
+  }
+
+  private async batchWriteItemInternal(batchWriteCommandInput: BatchWriteCommandInput): Promise<BatchWriteCommandOutput> {
+    const batchWriteCommand = new BatchWriteCommand(batchWriteCommandInput);
+    return this.documentClient.send(batchWriteCommand);
+  }
+
+  private async formatWriteItemPut(item: T) {
+    return ({
+      PutRequest: {
+        Item: item,
+      }
+    });
+  }
+
+  private async formatWriteItemDelete(item: T) {
+    return ({
+      DeleteRequest: {
+        Key: {
+          [this.pk as string]: this.pkValue(item),
+          [this.sk as string]: this.skValue(item)
+        },
+      }
+    });
+  }
+
+  async batchWrite(itemsToCreate: Array<T>, itemsToDelete: Array<T>): Promise<{failed: Array<T>}> {
+    const items = [];
+    const results = {
+      failed:  {itemsToCreate: [] as Array<T>, itemsToDelete: [] as Array<Partial<T>>}
+    };
+    itemsToCreate.forEach((item) => {
+      this.testKeys(this.pkValue(item), this.skValue(item));
+      items.push(this.formatWriteItemPut(item));
+    }));
+    itemsToDelete.forEach((item) => {
+      this.testKeys(this.pkValue(item), this.skValue(item));
+      items.push((this.formatWriteItemDelete(item))
+    }));
+    const batchs = this.splitIntoChunks(items);
+    for (const batch of batchs) {
+      const result = await this.batchWriteItemInternal({
+        RequestItems: {
+          [this.tableName as string]: batch
+        }
+      });
+      if (result.UnprocessedItems && Object.keys(result.UnprocessedItems || {})?.length) {
+        results.failed.itemsToCreate.push(...(result.UnprocessedItems[this.tableName as string] ?? []).filter((request) => !!request.PutRequest).map((request) => request.PutRequest?.Item as T));
+        results.failed.itemsToDelete.push(...(result.UnprocessedItems[this.tableName as string] ?? []).filter((request) => !!request.DeleteRequest).map((request) => request.DeleteRequest?.Key as Partial<T>));
+      }
+    }
+    // TODO
   }
 
   /**
