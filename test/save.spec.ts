@@ -1,6 +1,7 @@
 import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
 import HashKeyJoiModel from './models/hashkey-joi';
+import HashKeyUpToDateModel from './models/hashkey-up-to-date';
 
 describe('The save method', () => {
   beforeEach(async () => {
@@ -20,6 +21,26 @@ describe('The save method', () => {
     await foo.save();
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
+  });
+  test('should save the item with updatedAt field', async () => {
+    jest.spyOn(Date.prototype, 'toISOString').mockImplementation(() => '2023-11-10T14:36:39.297Z');
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const savedItem = {
+      ...item,
+      updatedAt: '2023-11-10T14:36:39.297Z'
+    }
+    const foo = new HashKeyUpToDateModel(item);
+    await foo.save();
+    const saved = await foo.get('bar');
+    expect(saved).toEqual(savedItem);
   });
   test('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();

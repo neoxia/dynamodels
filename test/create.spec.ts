@@ -48,7 +48,7 @@ describe('The create method', () => {
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
   });
-  test('should save the item with autoCreatedAt field', async () => {
+  test('should save the item with autoCreatedAt field and autoUpdatedAt field', async () => {
     const item = {
       hashkey: 'bar',
       string: 'whatever',
@@ -61,6 +61,7 @@ describe('The create method', () => {
     const expectedItem = {
       ...item,
       createdAt: '2023-11-10T14:36:39.297Z',
+      updatedAt: '2023-11-10T14:36:39.297Z',
     }
     const foo = new HashKeyUpToDateModel(item);
     jest.spyOn(Date.prototype, 'toISOString').mockImplementation(() => '2023-11-10T14:36:39.297Z');

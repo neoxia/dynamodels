@@ -217,6 +217,9 @@ export default abstract class Model<T> {
         throw new ValidationError('Validation error', error);
       }
     }
+    if (this.autoUpdatedAt) {
+      (toSave as T & UpToDateEntity).updatedAt = new Date().toISOString();
+    }
     // Prepare putItem operation
     const params: PutCommandInput = {
       TableName: this.tableName,
@@ -550,6 +553,12 @@ export default abstract class Model<T> {
       nativeOptions = options;
     }
     this.testKeys(pk, sk);
+    if (this.autoUpdatedAt) {
+      updateActions['updatedAt'] = {
+        action: "PUT",
+        value: new Date().toISOString(),
+      }
+    }
     const params: UpdateCommandInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),
