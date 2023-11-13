@@ -22,6 +22,7 @@ import Scan from './scan';
 import { IUpdateActions, buildUpdateActions } from './update-operators';
 import ValidationError from './validation-error';
 import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
+import {GetParameterCommand, SSMClient} from "@aws-sdk/client-ssm";
 
 export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
@@ -33,6 +34,32 @@ const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is Co
 
 export default abstract class Model<T> {
   protected tableName: string | undefined;
+
+  public async getTableName(): Promise<string | undefined> {
+    // check regex
+    if (this.tableName?.startsWith('arn:')) {
+      const isSsmArnRegex = /arn:aws:ssm:[a-zA-Z0-9-]+:\\d+:parameter\/([a-zA-Z0-9_/.-]+)$/;
+      const isMatchingArn = this.tableName.match(isSsmArnRegex)
+      if (!isMatchingArn) {
+        throw new Error("Invalid syntax for table name as SSM Parameter");
+      }
+      // call ssm sdk
+      const splitedARN = this.tableName.split(':');
+      const region = splitedARN[3];
+      const ssmClient = new SSMClient({ region });
+      const getValue = new GetParameterCommand({
+        Name: isMatchingArn[1],
+      });
+      try {
+        const paramGet = await ssmClient.send(getValue);
+        return paramGet.Parameter?.Value;
+      }
+      catch (e) {
+        throw new Error("Invalid SSM Parameter");
+      }
+    }
+    return this.tableName;
+  }
 
   protected item: T | undefined;
 
@@ -206,7 +233,7 @@ export default abstract class Model<T> {
     }
     // Prepare putItem operation
     const params: PutCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.getTableName(),
       Item: toSave,
     };
     // Overload putItem parameters with options given in arguments (if any)
@@ -220,17 +247,17 @@ export default abstract class Model<T> {
 
   /**
    * Get a single item by hash key
-   * @param pk: hash key value
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  hash key value
+   * @param options  Additional options supported by AWS document client.
    * @returns The matching item
    */
   async get(pk: KeyValue, options?: Partial<GetCommandInput>): Promise<T>;
 
   /**
    * Get a single item by hash key and range key
-   * @param pk: The hash key value
-   * @param sk: The range key value, if the table has a composite key
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  The hash key value
+   * @param sk  The range key value, if the table has a composite key
+   * @param options  Additional options supported by AWS document client.
    * @returns The matching item
    */
   async get(pk: KeyValue, sk: KeyValue, options?: Partial<GetCommandInput>): Promise<T>;
@@ -246,7 +273,7 @@ export default abstract class Model<T> {
     // Prepare getItem operation
     this.testKeys(pk, sk);
     const params: GetCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.getTableName(),
       Key: this.buildKeys(pk, sk),
     };
     // Overload getItem parameters with options given in arguments (if any)
@@ -275,17 +302,17 @@ export default abstract class Model<T> {
 
   /**
    * Check if an item exist by keys
-   * @param pk: The hash key value
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  The hash key value
+   * @param options  Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
   async exists(pk: KeyValue, options?: Partial<GetCommandInput>): Promise<boolean>;
 
   /**
    * Check if an item exist by keys
-   * @param pk: The hash key value
-   * @param sk: The range key value, if the table has a composite key
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  The hash key value
+   * @param sk  The range key value, if the table has a composite key
+   * @param options  Additional options supported by AWS document client.
    * @returns true if item exists, false otherwise
    */
   async exists(pk: KeyValue, sk?: KeyValue, options?: Partial<GetCommandInput>): Promise<boolean>;
@@ -304,8 +331,8 @@ export default abstract class Model<T> {
 
   /**
    * Delete a single item by key
-   * @param pk: The hash key value
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  The hash key value
+   * @param options  Additional options supported by AWS document client.
    * @returns  The item as it was before deletion and consumed capacity
    */
   async delete(pk: KeyValue, options?: Partial<DeleteCommandInput>): Promise<DeleteCommandOutput>;
@@ -313,9 +340,9 @@ export default abstract class Model<T> {
   async delete(item: T, options?: Partial<DeleteCommandInput>): Promise<DeleteCommandOutput>;
   /**
    * Delete a single item by key
-   * @param pk: The hash key value
-   * @param sk: The range key value, if the table has a composite key
-   * @param options: Additional options supported by AWS document client.
+   * @param pk  The hash key value
+   * @param sk  The range key value, if the table has a composite key
+   * @param options  Additional options supported by AWS document client.
    * @returns  The item as it was before deletion and consumed capacity
    */
 
@@ -347,7 +374,7 @@ export default abstract class Model<T> {
       throw new Error('Item to delete does not exists');
     }
     const params: DeleteCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.getTableName(),
       Key: this.buildKeys(pk, sk),
     };
     if (options) {
@@ -358,7 +385,7 @@ export default abstract class Model<T> {
 
   /**
    * Perform a scan operation on the table
-   * @param options: Additional options supported by AWS document client.
+   * @param options  Additional options supported by AWS document client.
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
   public scan(options?: Partial<ScanCommandInput>): Scan<T> {
@@ -367,12 +394,12 @@ export default abstract class Model<T> {
       throw new Error('Primary key is not defined on your model');
     }
     const params: ScanCommandInput = {
-      TableName: this.tableName,
+      TableName: '',
     };
     if (options) {
       Object.assign(params, options);
     }
-    return new Scan(this.documentClient, params, this.pk, this.sk);
+    return new Scan(this.documentClient, params, this.getTableName(), this.pk, this.sk);
   }
 
   /**
@@ -413,7 +440,7 @@ export default abstract class Model<T> {
         : (index_options as Partial<QueryCommandInput>);
     // Building query
     const params: QueryCommandInput = {
-      TableName: this.tableName,
+      TableName: '',
     };
     if (indexName) {
       params.IndexName = indexName;
@@ -421,27 +448,32 @@ export default abstract class Model<T> {
     if (queryOptions) {
       Object.assign(params, queryOptions);
     }
-    return new Query(this.documentClient, params, this.pk, this.sk);
+    return new Query(this.documentClient, params, this.getTableName() , this.pk, this.sk);
   }
 
   /**
    * Perform a batch get operation in the limit of 100 items
-   * @param keys: the keys of the items we want to retrieve
-   * @param options: Additional options supported by AWS document client.
+   * @param keys  the keys of the items we want to retrieve
+   * @param options  Additional options supported by AWS document client.
    * @returns the batch get operation result
    */
   private async getSingleBatch(keys: Keys, options?: Partial<BatchGetCommandInput>): Promise<T[]> {
     let params: BatchGetCommandInput;
-    if (!this.tableName) {
+    if (!await this.getTableName()) {
       throw new Error('Table name is not defined on your model');
     }
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
+    const tableName = await this.getTableName();
+
+    if (!tableName) {
+      throw new Error('42: Cannot determine [tableName]')
+    }
     if (isComposite(keys)) {
       params = {
         RequestItems: {
-          [this.tableName]: {
+          [tableName]: {
             Keys: keys.map((k) => this.buildKeys(k.pk, k.sk)),
           },
         },
@@ -449,7 +481,7 @@ export default abstract class Model<T> {
     } else {
       params = {
         RequestItems: {
-          [this.tableName]: {
+          [tableName]: {
             Keys: keys.map((pk) => ({ [String(this.pk)]: pk })),
           },
         },
@@ -459,15 +491,15 @@ export default abstract class Model<T> {
       Object.assign(params, options);
     }
     const result = await this.documentClient.send(new BatchGetCommand(params));
-    return result.Responses ? (result.Responses[this.tableName] as T[]) : [];
+    return result.Responses ? (result.Responses[tableName] as T[]) : [];
   }
 
   /**
    * Perform a batch get operation beyond the limit of 100 items.
    * If the is more than 100 items, the keys are automatically split in batch of 100 that
    * are run in parallel.
-   * @param keys: the keys of the items we want to retrieve
-   * @param options: Additional options supported by AWS document client.
+   * @param keys  the keys of the items we want to retrieve
+   * @param options  Additional options supported by AWS document client.
    * @returns all the matching items
    */
   async batchGet(keys: Keys, options?: Partial<BatchGetCommandInput>): Promise<T[]> {
@@ -538,7 +570,7 @@ export default abstract class Model<T> {
     }
     this.testKeys(pk, sk);
     const params: UpdateCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.getTableName(),
       Key: this.buildKeys(pk, sk),
       AttributeUpdates: buildUpdateActions(updateActions),
     };

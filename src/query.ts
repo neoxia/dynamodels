@@ -20,6 +20,7 @@ export default class Query<T> extends Operation<T> {
   constructor(
     documentClient: DynamoDBDocumentClient,
     params: QueryCommandInput | ScanCommandInput,
+    private readonly _getTableName: Promise<string | undefined>,
     pk: string,
     sk?: string,
   ) {
@@ -92,6 +93,7 @@ export default class Query<T> extends Operation<T> {
   }
 
   public async doExec(): Promise<IPaginatedResult<T>> {
+    this.params.TableName = await this._getTableName;
     const result = await this.documentClient.send(new QueryCommand(this.params));
     return this.buildResponse(result);
   }

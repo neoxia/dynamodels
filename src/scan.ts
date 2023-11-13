@@ -15,8 +15,10 @@ export default class Scan<T> extends Operation<T> {
   constructor(
     documentClient: DynamoDBDocumentClient,
     params: QueryCommandInput | ScanCommandInput,
+    private readonly _getTableName: Promise<string | undefined>,
     pk: string,
     sk?: string,
+
   ) {
     super(documentClient, params, pk, sk);
     this.params = params;
@@ -47,6 +49,7 @@ export default class Scan<T> extends Operation<T> {
    * @returns Fetched items, and pagination metadata
    */
   public async doExec(): Promise<IPaginatedResult<T>> {
+    this.params.TableName = await this._getTableName;
     const result = await this.documentClient.send(new ScanCommand(this.params));
     return this.buildResponse(result);
   }

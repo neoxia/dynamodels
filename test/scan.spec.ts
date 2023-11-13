@@ -23,7 +23,7 @@ import { attr, not } from '../src/filter-conditions';
 
 describe('The scan method', () => {
   const model = new CompositeKeyModel();
-  test.skip('should return all items in the table in 1MB limit is exec called', async () => {
+  test('should return all items in the table in 1MB limit is exec called', async () => {
     await clearTables();
     await generateData(model, 10000);
     const result = await model.scan().exec();
