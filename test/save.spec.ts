@@ -1,5 +1,6 @@
 import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
+import TimeTrackedModel from './models/autoCreatedAt-autoUpdatedAt';
 import HashKeyJoiModel from './models/hashkey-joi';
 
 describe('The save method', () => {
@@ -20,6 +21,39 @@ describe('The save method', () => {
     await foo.save();
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
+  });
+  test('should save the item with the updatedAt field when autoUpdatedAt is enabled', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const foo = new TimeTrackedModel();
+    await foo.save(item);
+    const saved = await foo.get('bar');
+    expect(saved).toHaveProperty('updatedAt');
+  });
+  test('should save the item and update the updatedAt field when calling the save method subsequently', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const foo = new TimeTrackedModel();
+    await foo.save(item);
+    const firstCallResult = await foo.get('bar');
+    await foo.save(item);
+    const secondCallResult = await foo.get('bar');
+    expect(firstCallResult.updatedAt).not.toEqual(secondCallResult.updatedAt);
+
   });
   test('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();

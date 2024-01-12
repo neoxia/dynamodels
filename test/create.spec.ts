@@ -1,5 +1,6 @@
 import { clearTables } from './hooks/create-tables';
 import HashKeyModel from './models/hashkey';
+import TimeTrackedModel from './models/autoCreatedAt-autoUpdatedAt';
 import HashKeyJoiModel from './models/hashkey-joi';
 import CompositeKeyModel from './models/composite-keys';
 
@@ -24,6 +25,42 @@ describe('The create method', () => {
     });
     const saved = await foo.get('bar');
     expect(saved).toEqual(item);
+  });
+  test('should not save with the createdAt field if autoCreatedAt is set to false', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const foo = new HashKeyModel(item);
+    expect(foo.getItem()).toBe(item);
+    await foo.create({
+      ReturnConsumedCapacity: 'NONE',
+    });
+    const saved = await foo.get('bar');
+    expect(saved).not.toHaveProperty('createdAt')
+  });
+  test('should save the item with createdAt field when autoCreatedAt is enabled', async () => {
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    const foo = new TimeTrackedModel(item);
+    expect(foo.getItem()).toBe(item);
+    await foo.create({
+      ReturnConsumedCapacity: 'NONE',
+    });
+    const saved = await foo.get('bar');
+    expect(saved).toHaveProperty('createdAt')
   });
   test('should throw an error if not item is held by the class', async () => {
     const foo = new HashKeyModel();
