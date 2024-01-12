@@ -19,7 +19,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import Query from './query';
 import Scan from './scan';
-import { IUpdateActions, buildUpdateActions } from './update-operators';
+import { IUpdateActions, buildUpdateActions, put } from './update-operators';
 import ValidationError from './validation-error';
 import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
 
@@ -43,6 +43,10 @@ export default abstract class Model<T> {
   protected documentClient: DynamoDBDocumentClient;
 
   protected schema: ObjectSchema | undefined;
+
+  protected autoCreatedAt = false;
+
+  protected autoUpdatedAt = false;
 
   constructor(item?: T, options?: DynamoDBClientConfig, translateConfig?: TranslateConfig) {
     this.item = item;
@@ -163,6 +167,9 @@ export default abstract class Model<T> {
       error.name = 'E_ALREADY_EXISTS';
       throw error;
     }
+    if (this.autoCreatedAt) {
+      Object.assign(toCreate, { createdAt: new Date().toISOString() });
+    }
     // Save item
     return this.save(toCreate, putOptions);
   }
@@ -203,6 +210,9 @@ export default abstract class Model<T> {
       if (error) {
         throw new ValidationError('Validation error', error);
       }
+    }
+    if (this.autoUpdatedAt) {
+      Object.assign(toSave, { updatedAt: new Date().toISOString() });
     }
     // Prepare putItem operation
     const params: PutCommandInput = {
@@ -337,8 +347,8 @@ export default abstract class Model<T> {
     const _pk: KeyValue | undefined = Model.isKey(pk_item)
       ? pk_item
       : pk_item
-      ? this.pkValue(pk_item)
-      : undefined;
+        ? this.pkValue(pk_item)
+        : undefined;
     const _sk: KeyValue = sk_options != null && Model.isKey(sk_options) ? sk_options : null;
     const deleteOptions = this.getOptions(sk_options, options);
     // Build delete item params
@@ -537,6 +547,9 @@ export default abstract class Model<T> {
       nativeOptions = options;
     }
     this.testKeys(pk, sk);
+    if (this.autoUpdatedAt) {
+      updateActions['updatedAt'] = put(new Date().toISOString());
+    }
     const params: UpdateCommandInput = {
       TableName: this.tableName,
       Key: this.buildKeys(pk, sk),

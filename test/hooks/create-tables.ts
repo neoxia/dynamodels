@@ -1,6 +1,7 @@
 import compositeTable from '../tables/composite-key';
 import hashTable from '../tables/hash-key';
 import numericalTable from '../tables/numerical-keys';
+import timeTrackedTable from '../tables/autoCreatedAt-autoUpdatedAt';
 import {
   CreateTableCommand,
   CreateTableCommandInput,
@@ -12,6 +13,7 @@ const tables: Record<string, CreateTableCommandInput> = {
   hashTable,
   compositeTable,
   numericalTable,
+  timeTrackedTable
 };
 
 const dynamodb = new DynamoDBClient({
