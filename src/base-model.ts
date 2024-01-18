@@ -609,15 +609,13 @@ export default abstract class Model<T> {
    * @returns the result of the batch write operation.
    */
   async batchWrite(items: { put: T[], delete: Keys | T[] }, options?: Partial<BatchWriteCommandInput>): Promise<BatchWriteCommandOutput[]> {
-    const writeRequests: any[] = [];
-    let output: BatchWriteCommandOutput[];
-    let params: BatchWriteCommandInput;
     if (!this.tableName) {
       throw new Error('Table name is not defined on your model');
     }
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
+    const writeRequests: any[] = [];
     //Building put requests
     items.put.forEach(item => {
       if (!this.isValidItem(item)) {
@@ -666,7 +664,8 @@ export default abstract class Model<T> {
     // Split the array of operations into batches of 25
     const batches = this.splitBatch(writeRequests, 25);
     //Make one BatchWrite request for every batch of 25 operations
-    output = await Promise.all(
+    let params: BatchWriteCommandInput;
+    const output: BatchWriteCommandOutput[] = await Promise.all(
       batches.map(batch => {
         params = {
           RequestItems: {
