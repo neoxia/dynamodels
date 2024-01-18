@@ -80,3 +80,17 @@ export const hashOnly = async (
   const results = await Promise.all(promises);
   return results.map((r) => r);
 };
+
+
+export const generateItems = (nbEntries: number, numericalKeys?: boolean) => {
+  const items: Array<CommonFields & { rangekey: string | number } & { hashkey: string | number }> = [];
+  for (let i = 0; i < nbEntries; i += 1) {
+    const item: CommonFields & { rangekey: string | number } & { hashkey: string | number } = {
+      hashkey: numericalKeys ? i : `_hashkey-${i}`,
+      ...generatePartial(i, numericalKeys),
+      rangekey: numericalKeys ? i : `_rangekey-${i}`,
+    };
+    items.push(item);
+  }
+  return items;
+}
