@@ -3,6 +3,9 @@ import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   BatchGetCommand,
   BatchGetCommandInput,
+  BatchWriteCommand,
+  BatchWriteCommandInput,
+  BatchWriteCommandOutput,
   DeleteCommand,
   DeleteCommandInput,
   DeleteCommandOutput,
@@ -29,7 +32,9 @@ type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
 
 const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
-  (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
+  hashKeys_compositeKeys.length > 0 && (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
+
+const isSimple = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is SimpleKey[] => hashKeys_compositeKeys.length > 0 && Model.isKey(hashKeys_compositeKeys[0]);
 
 export default abstract class Model<T> {
   protected tableName: string | undefined;
@@ -109,6 +114,18 @@ export default abstract class Model<T> {
   private isItem(item: unknown): item is T {
     try {
       this.pkValue(item as T);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private isValidItem(item: unknown): item is T {
+    try {
+      this.pkValue(item as T);
+      if (this.sk != null) {
+        this.skValue(item as T);
+      }
       return true;
     } catch (e) {
       return false;
@@ -484,17 +501,9 @@ export default abstract class Model<T> {
     if (keys.length === 0) {
       return [];
     }
-    const splitBatch = <K>(_keys: K[], CHUNK_SIZE = 100): K[][] => {
-      return _keys.reduce((batches: K[][], item: K, idx) => {
-        const chunkIndex = Math.floor(idx / CHUNK_SIZE);
-        if (!batches[chunkIndex]) batches[chunkIndex] = [];
-        batches[chunkIndex].push(item);
-        return batches;
-      }, []);
-    };
     if (isComposite(keys)) {
       // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-      const batches = splitBatch(keys);
+      const batches = this.splitBatch(keys, 100);
       // Perform the batchGet operation for each batch
       const responsesBatches: T[][] = await Promise.all(
         batches.map((batch: CompositeKey[]) => this.getSingleBatch(batch, options)),
@@ -503,7 +512,7 @@ export default abstract class Model<T> {
       return responsesBatches.reduce((b1, b2) => b1.concat(b2), []);
     }
     // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
-    const batches = splitBatch(keys);
+    const batches = this.splitBatch(keys, 100);
     // Perform the batchGet operation for each batch
     const responsesBatches: T[][] = await Promise.all(
       batches.map((batch: KeyValue[]) => this.getSingleBatch(batch, options)),
@@ -582,4 +591,124 @@ export default abstract class Model<T> {
       ? options
       : (sk_options as Partial<GetCommandInput>);
   }
+
+  private splitBatch = <K>(_keys: K[], CHUNK_SIZE: number): K[][] => {
+    return _keys.reduce((batches: K[][], item: K, idx) => {
+      const chunkIndex = Math.floor(idx / CHUNK_SIZE);
+      if (!batches[chunkIndex]) batches[chunkIndex] = [];
+      batches[chunkIndex].push(item);
+      return batches;
+    }, []);
+  };
+
+  /**
+   * Performs a batch write operation beyond the limit of 25 put or delete operations
+   * @param items.put: An array of items to be added or updated.
+   * @param items.delete: Keys or an array of items to be deleted.
+   * @param options: Additional options supported by AWS document client.
+   * @returns the result of the batch write operation.
+   */
+  async batchWrite(items: { put: T[], delete: Keys | T[] }, options?: Partial<BatchWriteCommandInput>): Promise<BatchWriteCommandOutput[]> {
+    const writeRequests: any[] = [];
+    let output: BatchWriteCommandOutput[];
+    let params: BatchWriteCommandInput;
+    if (!this.tableName) {
+      throw new Error('Table name is not defined on your model');
+    }
+    if (!this.pk) {
+      throw new Error('Primary key is not defined on your model');
+    }
+    //Building put requests
+    items.put.forEach(item => {
+      if (!this.isValidItem(item)) {
+        throw new Error("One of the required keys is missing")
+      }
+      if (this.autoUpdatedAt) {
+        item = {
+          ...item,
+          updatedAt: new Date().toISOString()
+        }
+      }
+      writeRequests.push({
+        PutRequest: {
+          Item: item
+        }
+      });
+    });
+    //Building delete requests
+    if (isComposite(items.delete as Keys)) {
+      (items.delete as CompositeKey[]).forEach(compositeKey => {
+        writeRequests.push({
+          DeleteRequest: {
+            Key: this.buildKeys(compositeKey.pk, compositeKey.sk)
+          }
+        });
+      })
+    } else if (isSimple(items.delete as Keys)) {
+      (items.delete as SimpleKey[]).forEach(hashKey => {
+        writeRequests.push({
+          DeleteRequest: {
+            Key: { [String(this.pk)]: hashKey }
+          }
+        });
+      })
+    } else {
+      items.delete.forEach(item => {
+        const pk = this.pkValue(item as T);
+        const sk = this.sk != null ? this.skValue(item as T) : undefined;
+        writeRequests.push({
+          DeleteRequest: {
+            Key: this.buildKeys(pk, sk)
+          }
+        });
+      })
+    }
+    // Split the array of operations into batches of 25
+    const batches = this.splitBatch(writeRequests, 25);
+    //Make one BatchWrite request for every batch of 25 operations
+    output = await Promise.all(
+      batches.map(batch => {
+        params = {
+          RequestItems: {
+            [this.tableName as string]: batch
+          }
+        }
+        if (options) {
+          Object.assign(params, options);
+        }
+        const command = new BatchWriteCommand(params);
+        return this.documentClient.send(command);
+      })
+    );
+    return output;
+  }
+
+  /**
+   * Performs a batch put operation beyond the limit of 25 operations
+   * @param items: An array of items to be added or updated in the database.
+   * @param options: Additional options supported by AWS document client.
+   * @returns the result of the batch write operation.
+   */
+  async batchCreate(items: T[], options?: Partial<BatchWriteCommandInput>): Promise<BatchWriteCommandOutput[]> {
+    return this.batchWrite({ put: items, delete: [] }, options);
+  }
+
+
+  /**
+   * Performs a batch delete operation beyond the limit of 25 operations
+   * @param items: Keys or an array of items to be deleted from the database.
+   * @param options: Additional options supported by AWS document client.
+   * @returns the result of the batch write operation.
+   */
+  async batchDelete(items: Keys | T[], options?: Partial<BatchWriteCommandInput>): Promise<BatchWriteCommandOutput[]> {
+    return this.batchWrite({ put: [], delete: items }, options);
+  }
 }
+
+
+
+
+
+
+
+
