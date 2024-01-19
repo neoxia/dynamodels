@@ -1,5 +1,5 @@
 import { ObjectSchema } from 'joi';
-import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
+import { DeleteRequest, DynamoDBClient, DynamoDBClientConfig, PutRequest, WriteRequest } from '@aws-sdk/client-dynamodb';
 import {
   BatchGetCommand,
   BatchGetCommandInput,
@@ -31,10 +31,10 @@ type SimpleKey = KeyValue;
 type CompositeKey = { pk: KeyValue; sk: KeyValue };
 type Keys = SimpleKey[] | CompositeKey[];
 
-const isComposite = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
+const isCompositeKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is CompositeKey[] =>
   hashKeys_compositeKeys.length > 0 && (hashKeys_compositeKeys[0] as { pk: string } & unknown).pk !== undefined;
 
-const isSimple = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is SimpleKey[] => hashKeys_compositeKeys.length > 0 && Model.isKey(hashKeys_compositeKeys[0]);
+const isSimpleKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is SimpleKey[] => hashKeys_compositeKeys.length > 0 && Model.isKey(hashKeys_compositeKeys[0]);
 
 export default abstract class Model<T> {
   protected tableName: string | undefined;
@@ -465,7 +465,7 @@ export default abstract class Model<T> {
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
-    if (isComposite(keys)) {
+    if (isCompositeKey(keys)) {
       params = {
         RequestItems: {
           [this.tableName]: {
@@ -501,7 +501,7 @@ export default abstract class Model<T> {
     if (keys.length === 0) {
       return [];
     }
-    if (isComposite(keys)) {
+    if (isCompositeKey(keys)) {
       // Split these IDs in batch of 100 as it is AWS DynamoDB batchGetItems operation limit
       const batches = this.splitBatch(keys, 100);
       // Perform the batchGet operation for each batch
@@ -615,7 +615,7 @@ export default abstract class Model<T> {
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
-    const writeRequests: any[] = [];
+    const writeRequests: WriteRequest[] = [];
     //Building put requests
     items.put.forEach(item => {
       if (!this.isValidItem(item)) {
@@ -630,24 +630,24 @@ export default abstract class Model<T> {
       writeRequests.push({
         PutRequest: {
           Item: item
-        }
+        } as PutRequest
       });
     });
     //Building delete requests
-    if (isComposite(items.delete as Keys)) {
+    if (isCompositeKey(items.delete as Keys)) {
       (items.delete as CompositeKey[]).forEach(compositeKey => {
         writeRequests.push({
           DeleteRequest: {
             Key: this.buildKeys(compositeKey.pk, compositeKey.sk)
-          }
+          } as DeleteRequest
         });
       })
-    } else if (isSimple(items.delete as Keys)) {
+    } else if (isSimpleKey(items.delete as Keys)) {
       (items.delete as SimpleKey[]).forEach(hashKey => {
         writeRequests.push({
           DeleteRequest: {
-            Key: { [this.pk as string]: hashKey }
-          }
+            Key: this.buildKeys(hashKey)
+          } as DeleteRequest
         });
       })
     } else {
@@ -657,7 +657,7 @@ export default abstract class Model<T> {
         writeRequests.push({
           DeleteRequest: {
             Key: this.buildKeys(pk, sk)
-          }
+          } as DeleteRequest
         });
       })
     }
