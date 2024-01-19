@@ -123,7 +123,7 @@ export default abstract class Model<T> {
   private isValidItem(item: unknown): item is T {
     try {
       this.pkValue(item as T);
-      if (this.sk != null) {
+      if (!!this.sk) {
         this.skValue(item as T);
       }
       return true;
@@ -646,14 +646,14 @@ export default abstract class Model<T> {
       (items.delete as SimpleKey[]).forEach(hashKey => {
         writeRequests.push({
           DeleteRequest: {
-            Key: { [String(this.pk)]: hashKey }
+            Key: { [this.pk as string]: hashKey }
           }
         });
       })
     } else {
       items.delete.forEach(item => {
         const pk = this.pkValue(item as T);
-        const sk = this.sk != null ? this.skValue(item as T) : undefined;
+        const sk = !!this.sk ? this.skValue(item as T) : undefined;
         writeRequests.push({
           DeleteRequest: {
             Key: this.buildKeys(pk, sk)
@@ -703,11 +703,3 @@ export default abstract class Model<T> {
     return this.batchWrite({ put: [], delete: items }, options);
   }
 }
-
-
-
-
-
-
-
-
