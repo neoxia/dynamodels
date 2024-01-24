@@ -4,7 +4,7 @@
     "rootDir": ".",
     "outDir": "./dist",
     "moduleResolution": "node",
-    "module": "ES2022",
+    "module": "commonjs",
     "declaration": true,
     "inlineSourceMap": true,
     "esModuleInterop": true,

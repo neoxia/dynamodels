@@ -37,7 +37,7 @@ const isCompositeKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is
 
 const isSimpleKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is SimpleKey[] => hashKeys_compositeKeys.length > 0 && Model.isKey(hashKeys_compositeKeys[0]);
 
-const getTableName = async (tableName: string) => {
+export const fetchTableName = async (tableName: string) => {
   if (tableName.startsWith('arn:aws:ssm')) {
     const ssmArnRegex = /^arn:aws:ssm:([a-z0-9-]+):\d{12}:parameter\/([a-zA-Z0-9_.\-/]+)$/;
     const isMatchingArn = tableName.match(ssmArnRegex)
@@ -50,32 +50,27 @@ const getTableName = async (tableName: string) => {
       Name: parameterName,
     });
     try {
-      const paramGet = await ssmClient.send(getValue);
-      return paramGet.Parameter?.Value;
+      const { Parameter } = await ssmClient.send(getValue);
+      return Parameter?.Value;
     }
     catch (e) {
-      console.log(e);
+      throw new Error("Invalid SSM Parameter");
     }
   }
   return tableName;
 }
 
-function SSMParam(target: Object, propertyKey: string) {
-  let value: Promise<string | undefined>;
-  const getter = function () {
-    return (async function () {
-      return await value;
-    })();
-  };
-  const setter = function (newVal: string) {
-    value = getTableName(newVal);
-  };
-  Object.defineProperty(target, propertyKey, {
-    get: getter,
-    set: setter
-  });
+const SSMParam = (target: any, key: string) => {
+  const symbol = Symbol();
+  Reflect.defineProperty(target, key, {
+    get: function () {
+      return (async () => await this[symbol])();
+    },
+    set: function (newVal: string) {
+      this[symbol] = fetchTableName(newVal);
+    }
+  })
 }
-
 
 export default abstract class Model<T> {
 
@@ -431,18 +426,18 @@ export default abstract class Model<T> {
    * @param options: Additional options supported by AWS document client.
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
-  public async scan(options?: Partial<ScanCommandInput>): Promise<Scan<T>> {
+  public scan(options?: Partial<ScanCommandInput>): Scan<T> {
     // Building scan parameters
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
     }
     const params: ScanCommandInput = {
-      TableName: await this.tableName,
+      TableName: '',
     };
     if (options) {
       Object.assign(params, options);
     }
-    return new Scan(this.documentClient, params, this.pk, this.sk);
+    return new Scan(this.documentClient, params, this.tableName, this.pk, this.sk);
   }
 
   /**
@@ -451,12 +446,12 @@ export default abstract class Model<T> {
    * @returns the number of items in the table
    */
   async count(): Promise<number> {
-    return (await this.scan()).count();
+    return this.scan().count();
   }
 
-  public async query(index?: string): Promise<Query<T>>;
+  public query(index?: string): Query<T>;
 
-  public async query(options?: Partial<QueryCommandInput>): Promise<Query<T>>;
+  public query(options?: Partial<QueryCommandInput>): Query<T>;
 
   /**
    * Performs a query operation.
@@ -465,12 +460,12 @@ export default abstract class Model<T> {
    * @returns The items matching the keys conditions, in the limit of 1MB,
    * and the last evaluated key.
    */
-  public async query(index?: string, options?: Partial<QueryCommandInput>): Promise<Query<T>>;
+  public query(index?: string, options?: Partial<QueryCommandInput>): Query<T>;
 
-  public async query(
+  public query(
     index_options?: string | Partial<QueryCommandInput>,
     options?: Partial<QueryCommandInput>,
-  ): Promise<Query<T>> {
+  ): Query<T> {
     // Handle overloading
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
@@ -483,7 +478,7 @@ export default abstract class Model<T> {
         : (index_options as Partial<QueryCommandInput>);
     // Building query
     const params: QueryCommandInput = {
-      TableName: await this.tableName,
+      TableName: '',
     };
     if (indexName) {
       params.IndexName = indexName;
@@ -491,7 +486,7 @@ export default abstract class Model<T> {
     if (queryOptions) {
       Object.assign(params, queryOptions);
     }
-    return new Query(this.documentClient, params, this.pk, this.sk);
+    return new Query(this.documentClient, params, this.tableName, this.pk, this.sk);
   }
 
   /**
