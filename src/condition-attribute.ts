@@ -14,15 +14,24 @@ export default abstract class ConditionAttribute<T> {
   }
 
   protected getAttributeUniqueIdentifier(): string {
-    return this.field + uuid().replace(/-/g, '');
+    return this.field.split('.').map(key => key + uuid().replace(/-/g, '')).join('.');
   }
 
-  protected fillMaps(id: string, value: T) {
-    const attr: Map<string, string> = new Map();
+  protected fillMaps(value: T) {
+    const { id, attr } = this.prepareAttributes();
     const values: Map<string, T> = new Map();
-    attr.set(`#${id}`, this.field);
-    values.set(`:${id}`, value);
-    return { attr, values };
+    values.set(`:${id.split('.').at(-1)}`, value);
+    return { id, attr, values };
+  }
+
+  protected prepareAttributes(): { id: string; attr: Map<string, string> } {
+    const keys = this.field.split('.');
+    const id = this.getAttributeUniqueIdentifier();
+    const attr: Map<string, string> = new Map();
+    id.split('.').forEach((id, index) => {
+      attr.set(`#${id}`, keys[index]);
+    })
+    return { id, attr };
   }
 
   public abstract eq(value: T): Condition<T>;
@@ -40,14 +49,13 @@ export default abstract class ConditionAttribute<T> {
   public abstract beginsWith(value: T): Condition<T>;
 
   protected prepareOp(value: T): { id: string; attr: Map<string, string>; values: Map<string, T> } {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
+    const { id, attr, values } = this.fillMaps(value);
     return { id, attr, values };
   }
 
   private arithmeticOperation(value: T, operator: ArithmeticOperator): IArgs<T> {
     const { id, attr, values } = this.prepareOp(value);
-    return [`#${id} ${operator} :${id}`, attr, values];
+    return [`#${id.replace(/\./g, '.#')} ${operator} :${id.split('.').at(-1)}`, attr, values];
   }
 
   protected prepareEq(value: T): IArgs<T> {
@@ -71,18 +79,15 @@ export default abstract class ConditionAttribute<T> {
   }
 
   protected prepareBetween(lower: KeyValue, upper: KeyValue): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const attr: Map<string, string> = new Map();
+    const { id, attr } = this.prepareAttributes();
     const values: Map<string, T> = new Map();
-    attr.set(`#${id}`, this.field);
-    values.set(`:${id}lower`, lower as T);
-    values.set(`:${id}upper`, upper as T);
-    return [`#${id} BETWEEN :${id}lower AND :${id}upper`, attr, values];
+    values.set(`:${id.split('.').at(-1)}lower`, lower as T);
+    values.set(`:${id.split('.').at(-1)}upper`, upper as T);
+    return [`#${id.replace(/\./g, '.#')} BETWEEN :${id.split('.').at(-1)}lower AND :${id.split('.').at(-1)}upper`, attr, values];
   }
 
   protected prepareBeginsWith(value: string): IArgs<T> {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value as T);
-    return [`begins_with(#${id}, :${id})`, attr, values];
+    const { id, attr, values } = this.fillMaps(value as T);
+    return [`begins_with(#${id.replace(/\./g, '.#')}, :${id.split('.').at(-1)})`, attr, values];
   }
 }

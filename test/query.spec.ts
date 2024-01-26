@@ -1435,6 +1435,40 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(7);
       expect(result.items.every((i) => i.bool)).toBe(true);
     });
+    test('should return items where EQ condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').eq('string-2'))
+        .exec();
+
+      expect(result.count).toBe(1);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].nested?.string).toBe('string-2');
+    });
+    test('should return items where EQ condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').eq(6))
+        .exec();
+      expect(result.count).toBe(1);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].nested?.number).toBe(6);
+    });
+    test('should return items where EQ condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.bool').eq(true))
+        .exec();
+      expect(result.count).toBe(7);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(7);
+      expect(result.items.every((i) => i.nested?.bool)).toBe(true);
+    });
   });
   describe('NE', () => {
     test('should return items where NEQ condition is true [string]', async () => {
@@ -1471,6 +1505,41 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(13);
       expect(result.items.every((i) => !i.bool)).toBe(true);
+    });
+    test('should return items where NEQ condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').neq('string-2'))
+        .exec();
+
+      expect(result.count).toBe(19);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(19);
+      expect(result.items.some((i) => i.nested!.string! === 'string-2')).toBe(false);
+    });
+    test('should return items where NEQ condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').neq(8))
+        .exec();
+
+      expect(result.count).toBe(19);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(19);
+      expect(result.items.some((i) => i.nested!.number! === 8)).toBe(false);
+    });
+    test('should return items where NEQ condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.bool').neq(true))
+        .exec();
+      expect(result.count).toBe(13);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(13);
+      expect(result.items.every((i) => !i.nested?.bool)).toBe(true);
     });
   });
   describe('IN', () => {
@@ -1511,6 +1580,43 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(14);
       expect(result.items.every((i) => i.bool != null)).toBe(true);
     });
+    test('should return items where IN condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').in('string-2', 'string-12', 'string-14', 'string-0'))
+        .exec();
+      expect(result.count).toBe(4);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(4);
+      expect(result.items.map((i) => i.nested?.string).sort()).toEqual(
+        ['string-2', 'string-12', 'string-14', 'string-0'].sort(),
+      );
+    });
+    test('should return items where IN condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').in(2, 12, 14, 0))
+        .exec();
+      expect(result.count).toBe(4);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(4);
+      expect(result.items.map((i) => i.nested?.number).sort()).toEqual(
+        [2, 12, 14, 0].sort(),
+      );
+    });
+    test('should return items where IN condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.bool').in(false, true))
+        .exec();
+      expect(result.count).toBe(14);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(14);
+      expect(result.items.every((i) => i.nested?.bool != null)).toBe(true);
+    });
   });
   describe('LE', () => {
     test('should return items where LE condition is true [string]', async () => {
@@ -1536,6 +1642,30 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(7);
       expect(result.items.every((i) => i.number! <= 12)).toBe(true);
+    });
+    test('should return items where LE condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').le('string-12'))
+        .exec();
+
+      expect(result.count).toBe(3);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(3);
+      expect(result.items.every((i) => (i.nested?.string as string).localeCompare('string-12') <= 0)).toBe(true);
+    });
+    test('should return items where LE condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').le(12))
+        .exec();
+
+      expect(result.count).toBe(7);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(7);
+      expect(result.items.every((i) => i.nested?.number as number <= 12)).toBe(true);
     });
   });
   describe('LT', () => {
@@ -1563,6 +1693,30 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(6);
       expect(result.items.every((i) => i.number! < 12)).toBe(true);
     });
+    test('should return items where LT condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').lt('string-12'))
+        .exec();
+
+      expect(result.count).toBe(2);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(2);
+      expect(result.items.every((i) => (i.nested?.string as string).localeCompare('string-12') < 0)).toBe(true);
+    });
+    test('should return items where LT condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').lt(12))
+        .exec();
+
+      expect(result.count).toBe(6);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(6);
+      expect(result.items.every((i) => i.nested?.number as number < 12)).toBe(true);
+    });
   });
   describe('GE', () => {
     test('should return items where GE condition is true [string]', async () => {
@@ -1581,6 +1735,28 @@ describe('The query method [filtering / fluid syntax]', () => {
         .query()
         .keys(key('hashkey').eq('hashkey-1'))
         .filter(attr('number').ge(12))
+        .exec();
+      expect(result.count).toBe(4);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(4);
+      expect(result.items.every((i) => i.number! >= 12)).toBe(true);
+    });
+    test('should return items where GE condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').ge('string-12'))
+        .exec();
+      expect(result.count).toBe(8);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(8);
+      expect(result.items.every((i) => i.string!.localeCompare('string-12') >= 0)).toBe(true);
+    });
+    test('should return items where GE condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').ge(12))
         .exec();
       expect(result.count).toBe(4);
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
@@ -1610,6 +1786,28 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(3);
       expect(result.items.every((i) => i.number! >= 12)).toBe(true);
+    });
+    test('should return items where GT condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').gt('string-12'))
+        .exec();
+      expect(result.count).toBe(7);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(7);
+      expect(result.items.every((i) => (i.nested?.string as string).localeCompare('string-12') > 0)).toBe(true);
+    });
+    test('should return items where GT condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').gt(12))
+        .exec();
+      expect(result.count).toBe(3);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(3);
+      expect(result.items.every((i) => i.nested?.number as number >= 12)).toBe(true);
     });
   });
   describe('BETWEEN', () => {
@@ -1642,6 +1840,36 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(6);
       expect(result.items.every((i) => i.number! >= 6 && i.number! <= 17)).toBe(true);
+    });
+    test('should return items where BETWEEN condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').between('string-3', 'string-8'))
+        .exec();
+
+      expect(result.count).toBe(3);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(3);
+      expect(
+        result.items.every(
+          (i) =>
+            (i.nested?.string as string).localeCompare('string-3') >= 0 && (i.nested?.string as string).localeCompare('string-8') <= 0,
+        ),
+      ).toBe(true);
+    });
+    test('should return items where BETWEEN condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').between(6, 17))
+
+        .exec();
+
+      expect(result.count).toBe(6);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(6);
+      expect(result.items.every((i) => i.nested?.number as number >= 6 && i.nested?.number as number <= 17)).toBe(true);
     });
   });
   describe('NOT_EXISTS', () => {
@@ -1711,6 +1939,39 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(10);
       expect(result.items.every((i) => i.optionalStringmap == null)).toBe(true);
     });
+    test('should return items where NOT_EXISTS condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalString').notExists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalString == null)).toBe(true);
+    });
+    test('should return items where NOT_EXISTS condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalNumber').notExists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalNumber == null)).toBe(true);
+    });
+    test('should return items where NOT_EXISTS condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalBool').notExists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalBool == null)).toBe(true);
+    });
   });
   describe('EXISTS', () => {
     test('should return items where EXISTS condition is true [string]', async () => {
@@ -1778,6 +2039,39 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(10);
       expect(result.items.every((i) => i.optionalStringmap !== undefined)).toBe(true);
+    });
+    test('should return items where EXISTS condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalString').exists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalString !== undefined)).toBe(true);
+    });
+    test('should return items where EXISTS condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalNumber').exists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalNumber !== undefined)).toBe(true);
+    });
+    test('should return items where EXISTS condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.optionalBool').exists())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested?.optionalBool !== undefined)).toBe(true);
     });
   });
   describe('NOT_NULL', () => {
@@ -1847,6 +2141,39 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(10);
       expect(result.items.every((i) => i.stringmap != null)).toBe(true);
     });
+    test('should return items where NOT_NULL condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').notNull())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested!.string! != null)).toBe(true);
+    });
+    test('should return items where NOT_NULL condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').notNull())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested!.number! != null)).toBe(true);
+    });
+    test('should return items where NOT_NULL condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.bool').notNull())
+        .exec();
+      expect(result.count).toBe(14);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(14);
+      expect(result.items.every((i) => i.nested?.bool != null)).toBe(true);
+    });
   });
   describe('NULL', () => {
     test('should return items where NULL condition is true [string]', async () => {
@@ -1915,6 +2242,39 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(10);
       expect(result.items.every((i) => i.stringmap == null)).toBe(true);
     });
+    test('should return items where NULL condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').null())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested!.string! == null)).toBe(true);
+    });
+    test('should return items where NULL condition is true [nestedAttr][number]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.number').null())
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(result.items.every((i) => i.nested!.number! == null)).toBe(true);
+    });
+    test('should return items where NULL condition is true [nestedAttr][boolean]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.bool').null())
+        .exec();
+      expect(result.count).toBe(6);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(6);
+      expect(result.items.every((i) => i.nested?.bool == null)).toBe(true);
+    });
   });
   describe('CONTAINS', () => {
     test('should return items where CONTAINS condition is true [string]', async () => {
@@ -1927,6 +2287,17 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
       expect(result.items.every((i) => i.string!.includes('ing-1'))).toBe(true);
+    });
+    test('should return items where CONTAINS condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').contains('ing-1'))
+        .exec();
+      expect(result.count).toBe(5);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(5);
+      expect(result.items.every((i) => (i.nested?.string as string).includes('ing-1'))).toBe(true);
     });
   });
   describe('NOT_CONTAINS', () => {
@@ -1941,6 +2312,17 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(15);
       expect(result.items.every((i) => !(i.string! && i.string!.includes('ing-1')))).toBe(true);
     });
+    test('should return items where NOT_CONTAINS condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').notContains('ing-1'))
+        .exec();
+      expect(result.count).toBe(15);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(15);
+      expect(result.items.every((i) => !(i.nested!.string! && (i.nested!.string as string).includes('ing-1')))).toBe(true);
+    });
   });
   describe('BEGINS_WITH', () => {
     test('should return items where BEGINS_WITH condition is true [string]', async () => {
@@ -1953,6 +2335,17 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(5);
       expect(result.items.every((i) => i.string!.match(/^string-1/))).toBe(true);
+    });
+    test('should return items where BEGINS_WITH condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(attr('nested.string').beginsWith('string-1'))
+        .exec();
+      expect(result.count).toBe(5);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(5);
+      expect(result.items.every((i) => (i.nested?.string as string).match(/^string-1/))).toBe(true);
     });
   });
   describe('OR', () => {
@@ -1969,6 +2362,21 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.items.length).toBe(6);
       expect(
         result.items.every((i) => i.string!.match(/^string-1/) || i.string!.includes('ing-4')),
+      ).toBe(true);
+    });
+    test('should return items where condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        // BW: 10, 12, 14, 16, 18
+        // CN: 4
+        .filter(attr('nested.string').beginsWith('string-1').or(attr('nested.string').contains('ing-4')))
+        .exec();
+      expect(result.count).toBe(6);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(6);
+      expect(
+        result.items.every((i) => (i.nested?.string as string).match(/^string-1/) || (i.nested?.string as string).includes('ing-4')),
       ).toBe(true);
     });
   });
@@ -1993,6 +2401,26 @@ describe('The query method [filtering / fluid syntax]', () => {
         ),
       ).toBe(true);
     });
+    test('should return items where condition is true [nestedAttr]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(
+          attr('nested.bool')
+            .eq(true)
+            .and(attr('nested.number').ge(12))
+            .and(attr('nested.string').beginsWith('string-1')),
+        )
+        .exec();
+      expect(result.count).toBe(2);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(2);
+      expect(
+        result.items.every(
+          (i) => (i.nested?.string as string).match(/^string-1/) && i.nested?.bool === true && i.nested?.number as number >= 12,
+        ),
+      ).toBe(true);
+    });
   });
   describe('OR/AND no-parenthesis', () => {
     test('should return items where BEGINS_WITH condition is true [string]', async () => {
@@ -2010,6 +2438,24 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(
         result.items.every(
           (i) => (i.bool === true && i.number! < 8) || i.string!.match(/^string-1/),
+        ),
+      ).toBe(true);
+    });
+    test('should return items where BEGINS_WITH condition is true [nestedAttr]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(
+          // bool = true AND number < 8 OR begins_with(string, string-1)
+          attr('nested.bool').eq(true).and(attr('nested.number').lt(8)).or(attr('nested.string').beginsWith('string-1')),
+        )
+        .exec();
+      expect(result.count).toBe(7);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(7);
+      expect(
+        result.items.every(
+          (i) => (i.nested?.bool === true && i.nested?.number as number < 8) || (i.nested?.string as string).match(/^string-1/),
         ),
       ).toBe(true);
     });
@@ -2037,6 +2483,28 @@ describe('The query method [filtering / fluid syntax]', () => {
         ),
       ).toBe(true);
     });
+    test('should return items where BEGINS_WITH condition is true [nestedAttr]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(
+          // COND1 : 0, 3, 6, 9, 12, 15, 18
+          // COND2: 0, 2, 6, 10, 12, 14, 16, 18
+          // bool = true AND (number < 8 OR begins_with(string, string-1))
+          attr('nested.bool')
+            .eq(true)
+            .and(attr('nested.number').lt(8).or(attr('nested.string').beginsWith('string-1'))),
+        )
+        .exec();
+      expect(result.count).toBe(4);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(4);
+      expect(
+        result.items.every(
+          (i) => i.nested?.bool === true && (i.nested?.number as number < 8 || (i.nested?.string as string).match(/^string-1/)),
+        ),
+      ).toBe(true);
+    });
   });
   describe('NOT', () => {
     test('should return items where BEGINS_WITH condition is true [string]', async () => {
@@ -2049,6 +2517,17 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
       expect(result.items.length).toBe(15);
       expect(result.items.every((i) => !i.string! || !i.string!.match(/^string-1/))).toBe(true);
+    });
+    test('should return items where BEGINS_WITH condition is true [nestedAttr][string]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        .filter(not(attr('nested.string').beginsWith('string-1')))
+        .exec();
+      expect(result.count).toBe(15);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(15);
+      expect(result.items.every((i) => !i.nested!.string! || !(i.nested!.string as string).match(/^string-1/))).toBe(true);
     });
   });
   describe('NOT/OR', () => {
@@ -2068,6 +2547,25 @@ describe('The query method [filtering / fluid syntax]', () => {
       expect(
         result.items.every(
           (i) => !(i.bool === false || (i.string! && i.string!.match(/^string-1/))),
+        ),
+      ).toBe(true);
+    });
+    test('should return items where BEGINS_WITH condition is true [nestedAttr]', async () => {
+      const result = await model
+        .query()
+        .keys(key('hashkey').eq('hashkey-1'))
+        // COND1: 10, 12, 14, 16, 18
+        // COND2: 1, 4, 7, 10, 13, 16, 19
+        // OR : 1, 4, 7, 10, 12, 13, 16, 18, 19
+        // NOT: 0, 2, 3, 5, 6, 8, 9, 11, 14, 15, 17
+        .filter(not(attr('nested.string').beginsWith('string-1').or(attr('nested.bool').eq(false))))
+        .exec();
+      expect(result.count).toBe(10);
+      expect(result.nextPage.lastEvaluatedKey).toBeFalsy();
+      expect(result.items.length).toBe(10);
+      expect(
+        result.items.every(
+          (i) => !(i.nested?.bool === false || (i.nested!.string! && (i.nested!.string as string).match(/^string-1/))),
         ),
       ).toBe(true);
     });
