@@ -10,6 +10,8 @@ interface TimeTrackedEntity {
 export default class TimeTrackedModel extends Model<HashKeyEntity & TimeTrackedEntity> {
     protected tableName = 'table_test_autoCreatedAt_autoUpdatedAt';
 
+    protected allowScan = true;
+
     protected pk = 'hashkey';
 
     protected documentClient = documentClient;

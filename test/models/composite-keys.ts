@@ -10,6 +10,8 @@ export type CompositeKeyEntity = CommonFields & {
 export default class CompositeKeyModel extends Model<CompositeKeyEntity> {
   protected tableName = 'table_test_composite_key';
 
+  protected allowScan = true;
+
   protected pk = 'hashkey';
 
   protected sk = 'rangekey';

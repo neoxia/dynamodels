@@ -6,6 +6,8 @@ import { HashKeyEntity } from './hashkey';
 export default class HashKeyJoiModel extends Model<HashKeyEntity> {
   protected tableName = 'table_test_hashkey';
 
+  protected allowScan = true;
+
   protected pk = 'hashkey';
 
   protected documentClient = documentClient;

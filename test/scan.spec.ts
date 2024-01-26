@@ -20,9 +20,11 @@ import {
   beginsWith,
 } from '../src';
 import { attr, not } from '../src/filter-conditions';
+import AllowScanModel from './models/allowScan';
 
 describe('The scan method', () => {
   const model = new CompositeKeyModel();
+  const scanAllowedModel = new AllowScanModel();
   test.skip('should return all items in the table in 1MB limit is exec called', async () => {
     await clearTables();
     await generateData(model, 10000);
@@ -36,6 +38,13 @@ describe('The scan method', () => {
     await generateData(model, 10);
     const result = await model.scan().execAll();
     expect(result.length).toBe(10);
+  });
+  test('should throw an error when allowScan is set to false', async () => {
+    try {
+      await scanAllowedModel.scan().execAll();
+    } catch (e) {
+      expect((e as Error).message.includes('By default, scan operations are not allowed. To enable them, consider enabling allowScan field.')).toBe(true);
+    }
   });
 });
 
