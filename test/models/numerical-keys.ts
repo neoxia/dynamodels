@@ -9,8 +9,6 @@ type NumericalKeyEntity = CommonFields & {
 export default class NumericalKeysModel extends Model<NumericalKeyEntity> {
   protected tableName = 'table_test_numerical_composite_key';
 
-  protected allowScan = true;
-
   protected pk = 'hashkey';
 
   protected sk = 'rangekey';

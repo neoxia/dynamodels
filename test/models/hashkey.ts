@@ -8,8 +8,6 @@ export type HashKeyEntity = CommonFields & {
 export default class HashKeyModel extends Model<HashKeyEntity> {
   protected tableName = 'table_test_hashkey';
 
-  protected allowScan = true;
-
   protected pk = 'hashkey';
 
   protected documentClient = documentClient;

@@ -53,7 +53,7 @@ export default abstract class Model<T> {
 
   protected autoUpdatedAt = false;
 
-  protected allowScan = false;
+  protected allowScan = true;
 
   constructor(item?: T, options?: DynamoDBClientConfig, translateConfig?: TranslateConfig) {
     this.item = item;
@@ -392,7 +392,7 @@ export default abstract class Model<T> {
    */
   public scan(options?: Partial<ScanCommandInput>): Scan<T> {
     if (!this.allowScan) {
-      throw new Error("By default, scan operations are not allowed. To enable them, consider enabling allowScan field.");
+      throw new Error("Model.prototype.scan: scan operations are not allowed. To enable them, consider enabling allowScan field.");
     }
     // Building scan parameters
     if (!this.pk) {

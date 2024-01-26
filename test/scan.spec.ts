@@ -43,7 +43,7 @@ describe('The scan method', () => {
     try {
       await scanAllowedModel.scan().execAll();
     } catch (e) {
-      expect((e as Error).message.includes('By default, scan operations are not allowed. To enable them, consider enabling allowScan field.')).toBe(true);
+      expect((e as Error).message.includes('Model.prototype.scan: scan operations are not allowed. To enable them, consider enabling allowScan field.')).toBe(true);
     }
   });
 });
