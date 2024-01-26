@@ -38,27 +38,17 @@ export default class FilterAttribute extends ConditionAttribute<FilterValue> {
   }
 
   public neq(value: FilterValue): FilterCondition {
-    const id = this.getAttributeUniqueIdentifier();
-    const { attr, values } = this.fillMaps(id, value);
-    return new FilterCondition(`#${id} <> :${id}`, attr, values);
+    const { id, attr, values } = this.fillMaps(value);
+    return new FilterCondition(`#${id.replace(/\./g, '.#')} <> :${id.split('.').at(-1)}`, attr, values);
   }
 
   public in(...values: FilterValue[]): FilterCondition {
-    const id = this.getAttributeUniqueIdentifier();
-    const attr: Map<string, string> = new Map();
+    const { id, attr } = this.prepareAttributes();
     const val: Map<string, FilterValue> = new Map();
-    attr.set(`#${id}`, this.field);
     values.forEach((value, idx) => {
-      val.set(`:${id}${idx}`, value);
+      val.set(`:${id.split('.').at(-1)}${idx}`, value);
     });
-    return new FilterCondition(`#${id} IN (${Array.from(val.keys()).join(',')})`, attr, val);
-  }
-
-  private prepareAttributes(): { id: string; attr: Map<string, string> } {
-    const id = this.getAttributeUniqueIdentifier();
-    const attr: Map<string, string> = new Map();
-    attr.set(`#${id}`, this.field);
-    return { id, attr };
+    return new FilterCondition(`#${id.replace(/\./g, '.#')} IN (${Array.from(val.keys()).join(',')})`, attr, val);
   }
 
   private prepareAttributesAndValues(): IAttributesValues {
@@ -70,19 +60,19 @@ export default class FilterAttribute extends ConditionAttribute<FilterValue> {
 
   private nullOperation(not = false): FilterCondition {
     const { id, attr, values } = this.prepareAttributesAndValues();
-    return new FilterCondition(`#${id} ${not ? '<>' : '='} :null`, attr, values);
+    return new FilterCondition(`#${id.replace(/\./g, '.#')} ${not ? '<>' : '='} :null`, attr, values);
   }
 
   private existsOperation(not = false): FilterCondition {
     const { id, attr } = this.prepareAttributes();
     const operator = not ? 'attribute_not_exists' : 'attribute_exists';
-    return new FilterCondition(`${operator}(#${id})`, attr, new Map());
+    return new FilterCondition(`${operator}(#${id.replace(/\./g, '.#')})`, attr, new Map());
   }
 
   private containsOperation(value: string, not = false): FilterCondition {
     const { id, attr, values } = this.prepareOp(value);
     const operator = not ? 'NOT contains' : 'contains';
-    return new FilterCondition(`${operator}(#${id}, :${id})`, attr, values);
+    return new FilterCondition(`${operator}(#${id.replace(/\./g, '.#')}, :${id.split('.').at(-1)})`, attr, values);
   }
 
   public null(): FilterCondition {

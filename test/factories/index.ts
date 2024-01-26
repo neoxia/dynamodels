@@ -25,6 +25,14 @@ const generatePartial = (
   optionalStringset: i % 2 === 0 ? [`string-${i}-0`, `string-${i}-1`, `string-${i}-2`] : undefined,
   optionalList: i % 2 === 0 ? [i, `item-${i}`] : undefined,
   optionalStringmap: i % 2 === 0 ? { [`key-${i}`]: `value-${i}` } : undefined,
+  nested: {
+    number: i % 2 === 0 ? i : null,
+    bool: generateBool(i),
+    string: i % 2 === 0 ? `string-${i}` : null,
+    optionalNumber: i % 2 === 0 ? i : undefined,
+    optionalBool: i % 2 === 0 ? true : undefined,
+    optionalString: i % 2 === 0 ? `string-${i}` : undefined,
+  }
 });
 
 const save = async (
