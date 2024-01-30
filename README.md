@@ -61,6 +61,29 @@ export class Album extends Model<IAlbum> {
 }
 ```
 
+You have the option to either directly provide the table name, as shown in the previous example, or retrieve it from the AWS Systems Manager (SSM) Parameter Store by specifying the ARN of the SSM parameter. The value will be automatically replaced at runtime.
+
+Here is an example of using table name as SSM Parameter ARN
+
+```typescript
+interface IAlbum {
+  artist: string;
+  album: string;
+  year?: number;
+  genres?: string[];
+}
+
+export class Album extends Model<IAlbum> {
+  protected tableName = 'arn:aws:ssm:<aws-region>:<aws-account-id>:parameter/ParameterName';
+  protected hashkey = 'artist';
+  protected rangekey = 'album';
+
+  constructor(item?: IAlbum) {
+    super(item);
+  }
+}
+```
+
 Here is another example for a table with a simple hashkey:
 
 ```typescript
