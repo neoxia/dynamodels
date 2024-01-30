@@ -704,10 +704,10 @@ export default abstract class Model<T> {
     //Make one BatchWrite request for every batch of 25 operations
     let params: BatchWriteCommandInput;
     const output: BatchWriteCommandOutput[] = await Promise.all(
-      batches.map(batch => {
+      batches.map(async (batch) => {
         params = {
           RequestItems: {
-            [this.tableName as string]: batch
+            [await this.tableName as string]: batch
           }
         }
         if (options) {
