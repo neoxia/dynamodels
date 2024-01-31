@@ -25,6 +25,7 @@ import Scan from './scan';
 import { IUpdateActions, buildUpdateActions, put } from './update-operators';
 import ValidationError from './validation-error';
 import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
+import { hashKey, item, rangeKey, validItem, validate } from './decorators';
 
 export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
@@ -39,10 +40,13 @@ const isSimpleKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is Si
 export default abstract class Model<T> {
   protected tableName: string | undefined;
 
+  @item
   protected item: T | undefined;
 
+  @hashKey
   protected pk: string | undefined;
 
+  @rangeKey
   protected sk: string | undefined;
 
   protected documentClient: DynamoDBDocumentClient;
@@ -207,13 +211,14 @@ export default abstract class Model<T> {
    */
   async save(item: T, options?: Partial<PutCommandInput>): Promise<T>;
 
+  @validate
   async save(
-    item_options?: T | Partial<PutCommandInput>,
+    @validItem item_options?: T | Partial<PutCommandInput>,
     options?: Partial<PutCommandInput>,
   ): Promise<T> {
     // Handle typescript method overloading
     const toSave: T | undefined =
-      item_options != null && this.isItem(item_options) ? item_options : this.item;
+      item_options != null ? item_options as T : this.item;
     const putOptions: Partial<PutCommandInput> | undefined =
       item_options != null && this.isItem(item_options)
         ? options
