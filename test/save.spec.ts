@@ -1,7 +1,8 @@
 import { clearTables } from './hooks/create-tables';
-import HashKeyModel from './models/hashkey';
+import HashKeyModel, { HashKeyEntity } from './models/hashkey';
 import TimeTrackedModel from './models/autoCreatedAt-autoUpdatedAt';
 import HashKeyJoiModel from './models/hashkey-joi';
+import CompositeKeyModel, { CompositeKeyEntity } from './models/composite-keys';
 
 describe('The save method', () => {
   beforeEach(async () => {
@@ -62,6 +63,41 @@ describe('The save method', () => {
       fail('should throw');
     } catch (e) {
       expect((e as Error).message.includes('No item to save')).toBe(true);
+    }
+  });
+  test('should throw an error if the hash keys is missing', async () => {
+    const foo = new HashKeyModel();
+    const item = {
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    try {
+      await foo.save(item as unknown as HashKeyEntity);
+      fail('should throw');
+    } catch (e) {
+      expect((e as Error).message.includes('Validation error')).toBe(true);
+    }
+  });
+  test('should throw an error if the range key is missing', async () => {
+    const foo = new CompositeKeyModel();
+    const item = {
+      hashkey: 'bar',
+      string: 'whatever',
+      stringmap: { foo: 'bar' },
+      stringset: ['bar, bar'],
+      number: 43,
+      bool: true,
+      list: ['foo', 42],
+    };
+    try {
+      await foo.save(item as unknown as CompositeKeyEntity);
+      fail('should throw');
+    } catch (e) {
+      expect((e as Error).message.includes('Validation error')).toBe(true);
     }
   });
   test('should throw an error if a Joi schema is specified and validation failed', async () => {
