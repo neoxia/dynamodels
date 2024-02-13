@@ -91,6 +91,8 @@ export default abstract class Model<T> {
 
   protected autoUpdatedAt = false;
 
+  protected allowScan = true;
+
   constructor(item?: T, options?: DynamoDBClientConfig, translateConfig?: TranslateConfig) {
     this.item = item;
     const client = new DynamoDBClient(options ?? { region: process.env.AWS_REGION });
@@ -427,6 +429,9 @@ export default abstract class Model<T> {
    * @returns  The scanned items (in the 1MB single scan operation limit) and the last evaluated key
    */
   public scan(options?: Partial<ScanCommandInput>): Scan<T> {
+    if (!this.allowScan) {
+      throw new Error("Model.prototype.scan: scan operations are not allowed. To enable them, consider enabling allowScan field.");
+    }
     // Building scan parameters
     if (!this.pk) {
       throw new Error('Primary key is not defined on your model');
