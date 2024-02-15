@@ -25,6 +25,7 @@ import Scan from './scan';
 import { IUpdateActions, buildUpdateActions, put } from './update-operators';
 import ValidationError from './validation-error';
 import { PutCommandInput } from '@aws-sdk/lib-dynamodb/dist-types/commands/PutCommand';
+import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 
 export type KeyValue = string | number | Buffer | boolean | null;
 type SimpleKey = KeyValue;
@@ -36,8 +37,45 @@ const isCompositeKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is
 
 const isSimpleKey = (hashKeys_compositeKeys: Keys): hashKeys_compositeKeys is SimpleKey[] => hashKeys_compositeKeys.length > 0 && Model.isKey(hashKeys_compositeKeys[0]);
 
+export const fetchTableName = async (tableName: string) => {
+  if (tableName.startsWith('arn:aws:ssm')) {
+    const ssmArnRegex = /^arn:aws:ssm:([a-z0-9-]+):\d{12}:parameter\/([a-zA-Z0-9_.\-/]+)$/;
+    const isMatchingArn = tableName.match(ssmArnRegex)
+    if (!isMatchingArn) {
+      throw new Error("Invalid syntax for table name as SSM Parameter");
+    }
+    const [_, region, parameterName] = isMatchingArn;
+    const ssmClient = new SSMClient({ region });
+    const getValue = new GetParameterCommand({
+      Name: parameterName,
+    });
+    try {
+      const { Parameter } = await ssmClient.send(getValue);
+      return Parameter?.Value;
+    }
+    catch (e) {
+      throw new Error("Invalid SSM Parameter");
+    }
+  }
+  return tableName;
+}
+
+const SSMParam = (target: any, key: string) => {
+  const symbol = Symbol();
+  Reflect.defineProperty(target, key, {
+    get: function () {
+      return (async () => await this[symbol])();
+    },
+    set: function (newVal: string) {
+      this[symbol] = fetchTableName(newVal);
+    }
+  })
+}
+
 export default abstract class Model<T> {
-  protected tableName: string | undefined;
+
+  @SSMParam
+  protected tableName: string | Promise<string | undefined> | undefined;
 
   protected item: T | undefined;
 
@@ -235,7 +273,7 @@ export default abstract class Model<T> {
     }
     // Prepare putItem operation
     const params: PutCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.tableName,
       Item: toSave,
     };
     // Overload putItem parameters with options given in arguments (if any)
@@ -275,7 +313,7 @@ export default abstract class Model<T> {
     // Prepare getItem operation
     this.testKeys(pk, sk);
     const params: GetCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.tableName,
       Key: this.buildKeys(pk, sk),
     };
     // Overload getItem parameters with options given in arguments (if any)
@@ -376,7 +414,7 @@ export default abstract class Model<T> {
       throw new Error('Item to delete does not exists');
     }
     const params: DeleteCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.tableName,
       Key: this.buildKeys(pk, sk),
     };
     if (options) {
@@ -399,12 +437,12 @@ export default abstract class Model<T> {
       throw new Error('Primary key is not defined on your model');
     }
     const params: ScanCommandInput = {
-      TableName: this.tableName,
+      TableName: '',
     };
     if (options) {
       Object.assign(params, options);
     }
-    return new Scan(this.documentClient, params, this.pk, this.sk);
+    return new Scan(this.documentClient, params, this.tableName, this.pk, this.sk);
   }
 
   /**
@@ -445,7 +483,7 @@ export default abstract class Model<T> {
         : (index_options as Partial<QueryCommandInput>);
     // Building query
     const params: QueryCommandInput = {
-      TableName: this.tableName,
+      TableName: '',
     };
     if (indexName) {
       params.IndexName = indexName;
@@ -453,7 +491,7 @@ export default abstract class Model<T> {
     if (queryOptions) {
       Object.assign(params, queryOptions);
     }
-    return new Query(this.documentClient, params, this.pk, this.sk);
+    return new Query(this.documentClient, params, this.tableName, this.pk, this.sk);
   }
 
   /**
@@ -473,7 +511,7 @@ export default abstract class Model<T> {
     if (isCompositeKey(keys)) {
       params = {
         RequestItems: {
-          [this.tableName]: {
+          [await this.tableName as string]: {
             Keys: keys.map((k) => this.buildKeys(k.pk, k.sk)),
           },
         },
@@ -481,7 +519,7 @@ export default abstract class Model<T> {
     } else {
       params = {
         RequestItems: {
-          [this.tableName]: {
+          [await this.tableName as string]: {
             Keys: keys.map((pk) => ({ [String(this.pk)]: pk })),
           },
         },
@@ -491,7 +529,7 @@ export default abstract class Model<T> {
       Object.assign(params, options);
     }
     const result = await this.documentClient.send(new BatchGetCommand(params));
-    return result.Responses ? (result.Responses[this.tableName] as T[]) : [];
+    return result.Responses ? (result.Responses[await this.tableName as string] as T[]) : [];
   }
 
   /**
@@ -565,7 +603,7 @@ export default abstract class Model<T> {
       updateActions['updatedAt'] = put(new Date().toISOString());
     }
     const params: UpdateCommandInput = {
-      TableName: this.tableName,
+      TableName: await this.tableName,
       Key: this.buildKeys(pk, sk),
       AttributeUpdates: buildUpdateActions(updateActions),
     };
@@ -671,10 +709,10 @@ export default abstract class Model<T> {
     //Make one BatchWrite request for every batch of 25 operations
     let params: BatchWriteCommandInput;
     const output: BatchWriteCommandOutput[] = await Promise.all(
-      batches.map(batch => {
+      batches.map(async (batch) => {
         params = {
           RequestItems: {
-            [this.tableName as string]: batch
+            [await this.tableName as string]: batch
           }
         }
         if (options) {
